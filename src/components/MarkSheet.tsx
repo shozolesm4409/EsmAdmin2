@@ -1,0 +1,267 @@
+import React, { useState } from 'react';
+import { User } from '../types';
+import { Search, Filter, Copy, CheckCircle2, Loader2 } from 'lucide-react';
+
+interface MarkSheetProps {
+  users: User[];
+  onStatusUpdate: (rowId: number, markIndex: number, status: string) => Promise<void>;
+  adminAccess?: string;
+  onNotify?: (type: 'success' | 'error', message: string) => void;
+}
+
+export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }: MarkSheetProps) {
+  const allSubjects = Array.from(new Set(users.map(u => u.subject))).filter(Boolean);
+  
+  const subjects = React.useMemo(() => {
+    if (adminAccess === 'Full') return allSubjects;
+    
+    const regex = /MarkSheet'([^']+)'/;
+    const match = adminAccess.match(regex);
+    if (match) {
+      const allowed = match[1].split(',').map(s => s.trim());
+      return allSubjects.filter(s => allowed.includes(s));
+    }
+    
+    // If MarkSheet is in access string but no specific subjects defined
+    if (adminAccess.includes('MarkSheet')) return allSubjects;
+    
+    return [];
+  }, [allSubjects, adminAccess]);
+
+  const [activeSubject, setActiveSubject] = useState(subjects[0] || '');
+  const [activeStatus, setActiveStatus] = useState('Pending');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [updating, setUpdating] = useState<string | null>(null);
+  const [previewJSON, setPreviewJSON] = useState<string | null>(null);
+  const [previewCount, setPreviewCount] = useState(0);
+
+  const filteredData = users
+    .filter(u => u.subject === activeSubject)
+    .flatMap(u => (u.extraData || []).map((mark, idx) => ({
+      ...mark,
+      branchName: u.branchName,
+      rowId: u.rowId,
+      markIndex: idx
+    })))
+    .filter(item => {
+      const matchesSearch = (item.branchName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (item.roll || '').toString().includes(searchTerm);
+      const matchesStatus = item.status === activeStatus;
+      return matchesSearch && matchesStatus;
+    });
+
+  const handleStatusChange = async (rowId: number, markIndex: number, newStatus: string) => {
+    const updateKey = `${rowId}-${markIndex}`;
+    setUpdating(updateKey);
+    try {
+      await onStatusUpdate(rowId, markIndex, newStatus);
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const statusCounts = React.useMemo(() => {
+    const counts = { Pending: 0, Updated: 0, Wrong: 0 };
+    users
+      .filter(u => u.subject === activeSubject)
+      .flatMap(u => (u.extraData || []))
+      .forEach(mark => {
+        if (mark.status === 'Pending') counts.Pending++;
+        else if (mark.status === 'Updated') counts.Updated++;
+        else if (mark.status === 'Wrong') counts.Wrong++;
+      });
+    return counts;
+  }, [users, activeSubject]);
+
+  const handlePreviewJSON = () => {
+    if (activeStatus !== 'Pending') return;
+    
+    const jsonData = filteredData.map((item, idx) => ({
+      slno: (idx + 1).toString().padStart(2, '0'),
+      roll: (item.roll || '').toString(),
+      mark: (item.mark || '').toString()
+    }));
+
+    const jsonString = JSON.stringify(jsonData, null, 2);
+    setPreviewJSON(jsonString);
+    setPreviewCount(jsonData.length);
+  };
+
+  const handleConfirmCopy = () => {
+    if (!previewJSON) return;
+    navigator.clipboard.writeText(previewJSON).then(() => {
+      if (onNotify) {
+        onNotify('success', 'JSON copied to clipboard!');
+      } else {
+        alert('JSON copied to clipboard!');
+      }
+      setPreviewJSON(null);
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">MarkSheet Management</h2>
+            <p className="text-sm text-slate-500">View and manage student marks by subject.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {activeStatus === 'Pending' && filteredData.length > 0 && (
+              <button
+                onClick={handlePreviewJSON}
+                className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-all shadow-sm cursor-pointer"
+              >
+                <Copy size={14} />
+                Copy JSON
+              </button>
+            )}
+            <div className="relative">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search branch or roll..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-64"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-wrap gap-2">
+            {subjects.map(subject => (
+              <button
+                key={subject}
+                onClick={() => setActiveSubject(subject)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  activeSubject === subject
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {subject}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-fit">
+            {['Pending', 'Updated', 'Wrong'].map(status => (
+              <button
+                key={status}
+                onClick={() => setActiveStatus(status)}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 ${
+                  activeStatus === status
+                    ? status === 'Pending' ? 'bg-amber-500 text-white shadow-sm' :
+                      status === 'Updated' ? 'bg-emerald-500 text-white shadow-sm' :
+                      'bg-rose-500 text-white shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {status}
+                <span className={`px-1.5 py-0.5 rounded-md text-[9px] ${
+                  activeStatus === status ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+                }`}>
+                  {statusCounts[status as keyof typeof statusCounts]}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="overflow-x-auto border border-slate-100 rounded-xl max-h-[400px] overflow-y-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
+                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">SL</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Branch</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Roll</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Mark</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredData.map((item, idx) => (
+                <tr key={`${item.rowId}-${item.markIndex}`} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-1 text-sm text-slate-500">{idx + 1}</td>
+                  <td className="px-6 py-1 text-sm font-medium text-slate-900">{item.branchName}</td>
+                  <td className="px-6 py-1 text-sm font-bold text-blue-600">{item.roll}</td>
+                  <td className="px-6 py-1 text-sm text-slate-600">{item.mark}</td>
+                  <td className="px-6 py-1">
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={item.status}
+                        disabled={updating === `${item.rowId}-${item.markIndex}`}
+                        onChange={(e) => handleStatusChange(item.rowId, item.markIndex, e.target.value)}
+                        className={`text-[10px] font-bold px-2 py-1 rounded-lg border-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition-all shadow-sm ${
+                          item.status === 'Updated' ? 'bg-emerald-500 text-white hover:bg-emerald-600' :
+                          item.status === 'Wrong' ? 'bg-rose-500 text-white hover:bg-rose-600' :
+                          'bg-amber-500 text-white hover:bg-amber-600'
+                        }`}
+                      >
+                        <option value="Pending">Pending</option>
+                        <option value="Updated">Updated</option>
+                        <option value="Wrong">Wrong</option>
+                      </select>
+                      {updating === `${item.rowId}-${item.markIndex}` && (
+                        <Loader2 size={12} className="animate-spin text-blue-600" />
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredData.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
+                    No records found for this subject.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* JSON Preview Modal */}
+      {previewJSON && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">JSON Preview</h3>
+                <p className="text-sm text-slate-500">Subject: <span className="font-semibold text-slate-700">{activeSubject}</span> • <span className="font-semibold text-slate-700">{previewCount}</span> records</p>
+              </div>
+              <button onClick={() => setPreviewJSON(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto flex-1 bg-slate-900">
+              <pre className="text-xs text-emerald-400 font-mono whitespace-pre-wrap">
+                {previewJSON}
+              </pre>
+            </div>
+            <div className="p-4 border-t border-slate-100 flex justify-end gap-3 bg-white">
+              <button 
+                onClick={() => setPreviewJSON(null)}
+                className="px-6 py-2 border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleConfirmCopy}
+                className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-colors flex items-center gap-2 cursor-pointer"
+              >
+                <Copy size={16} />
+                Copy JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
