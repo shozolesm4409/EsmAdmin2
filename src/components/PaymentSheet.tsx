@@ -35,7 +35,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
 
   const statusCounts = React.useMemo(() => {
-    const counts = { Pending: 0, Update: 0 };
+    const counts = { Pending: 0, Updated: 0 };
     const subjectUsers = users.filter(u => u.subject === activeSubject);
     
     // Group by teacher-tpin-branch to match the table rows
@@ -44,7 +44,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
       const key = `${u.teacherName}-${u.teacherTPIN}-${u.branchName}`;
       if (!uniqueRows.has(key)) {
         uniqueRows.add(key);
-        if (u.paymentStatus === 'Update') counts.Update++;
+        if (u.paymentStatus === 'Updated') counts.Updated++;
         else counts.Pending++;
       }
     });
@@ -73,8 +73,8 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
         branch.bvCount += Number(current.bvCount || 0);
         branch.evCount += Number(current.evCount || 0);
         branch.rowIds.push(current.rowId);
-        if (current.paymentStatus === 'Update') {
-          branch.status = 'Update';
+        if (current.paymentStatus === 'Updated') {
+          branch.status = 'Updated';
         }
       } else {
         teacherGroup.branches.push({
@@ -100,7 +100,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
   );
 
   const handleStatusChange = async (group: any, newStatus: string) => {
-    if (newStatus === 'Update') {
+    if (newStatus === 'Updated') {
       setIsUpdating(group.key);
       try {
         // Collect all rowIds from all branches
@@ -162,7 +162,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
           </div>
 
           <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-fit">
-            {['Pending', 'Update'].map(status => (
+            {['Pending', 'Updated'].map(status => (
               <button
                 key={status}
                 onClick={() => setActiveStatus(status)}
@@ -225,17 +225,17 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
                                 <Eye size={16} />
                               </button>
                               <select 
-                                value={group.branches.every((b: any) => b.status === 'Update') ? 'Update' : 'Pending'} 
+                                value={group.branches.every((b: any) => b.status === 'Updated') ? 'Updated' : 'Pending'} 
                                 onChange={(e) => handleStatusChange(group, e.target.value)}
-                                disabled={isUpdating === group.key || group.branches.every((b: any) => b.status === 'Update')}
+                                disabled={isUpdating === group.key || group.branches.every((b: any) => b.status === 'Updated')}
                                 className={`text-[10px] font-bold px-2 py-1 rounded-lg border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer shadow-sm ${
-                                  group.branches.every((b: any) => b.status === 'Update')
+                                  group.branches.every((b: any) => b.status === 'Updated')
                                     ? 'bg-emerald-500 text-white cursor-default' 
                                     : 'bg-amber-500 text-white hover:bg-amber-600'
                                 }`}
                               >
                                 <option value="Pending">Pending</option>
-                                <option value="Update">Update</option>
+                                <option value="Updated">Updated</option>
                               </select>
                               {isUpdating === group.key && <Loader2 size={12} className="animate-spin text-blue-600" />}
                             </div>
