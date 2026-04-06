@@ -93,7 +93,7 @@ export function Sidebar({ isOpen, setIsOpen, currentView, onViewChange, userAcce
             <LogOut size={20} />
             <span className="font-medium">Logout</span>
           </button>
-          <span className="text-xs text-slate-500 font-medium px-2">Version: 3.2</span>
+          <span className="text-xs text-slate-500 font-medium px-2">Version: 3.5</span>
         </div>
       </aside>
     </>

@@ -22,7 +22,30 @@ const MOCK_DATA: User[] = [
   },
 ];
 
+const cache: {
+  users: User[] | null;
+  adminUsers: AdminUserRecord[] | null;
+  branches: Branch[] | null;
+  examiners: Examiner[] | null;
+} = {
+  users: null,
+  adminUsers: null,
+  branches: null,
+  examiners: null
+};
+
 export const apiService = {
+  clearCache(key?: keyof typeof cache) {
+    if (key) {
+      cache[key] = null;
+    } else {
+      cache.users = null;
+      cache.adminUsers = null;
+      cache.branches = null;
+      cache.examiners = null;
+    }
+  },
+
   async adminLogin(userId: string, password: string): Promise<AdminUser> {
     if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) {
       if (userId === 'admin' && password === 'admin') {
@@ -45,7 +68,10 @@ export const apiService = {
     }
   },
 
-  async getUsers(): Promise<User[]> {
+  async getUsers(forceRefresh = false): Promise<User[]> {
+    if (!forceRefresh && cache.users) {
+      return cache.users;
+    }
     if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) {
       return new Promise((resolve) => setTimeout(() => resolve(MOCK_DATA), 800));
     }
@@ -57,11 +83,14 @@ export const apiService = {
       });
       const data = await response.json();
       console.log('Users Data:', data);
-      if (data.status === 'success') return data.data;
+      if (data.status === 'success') {
+        cache.users = data.data;
+        return data.data;
+      }
       throw new Error(data.message || 'Failed to fetch data');
     } catch (error: any) {
       console.error('Fetch Error:', error);
-      throw new Error(error.message || 'Network Error');
+      throw new Error(error.message === 'Failed to fetch' ? 'Network Error: Google Script unreachable. Please check your internet connection or Script URL.' : (error.message || 'Network Error'));
     }
   },
 
@@ -88,6 +117,7 @@ export const apiService = {
       });
       const responseData = await response.json();
       if (responseData.status !== 'success') throw new Error(responseData.message || 'Failed to save data');
+      this.clearCache('users');
     } catch (error: any) {
       console.error('Save Error:', error);
       throw new Error(error.message || 'Network Error');
@@ -108,42 +138,71 @@ export const apiService = {
       });
       const data = await response.json();
       if (data.status !== 'success') throw new Error(data.message || 'Failed to delete record');
+      this.clearCache('users');
     } catch (error: any) {
       console.error('Delete Error:', error);
       throw new Error(error.message || 'Network Error');
     }
   },
 
-  async getAdminUsers(): Promise<AdminUserRecord[]> {
+  async getAdminUsers(forceRefresh = false): Promise<AdminUserRecord[]> {
+    if (!forceRefresh && cache.adminUsers) {
+      return cache.adminUsers;
+    }
     if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) {
       return [{ rowId: 2, userId: 'admin', userName: 'Super Admin', status: 'Active', role: 'Admin', accessSidebar: 'Full' }];
     }
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'readAdminUsers' }),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    });
-    const data = await response.json();
-    console.log('Admin Users Data:', data);
-    return data.data;
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'readAdminUsers' }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const data = await response.json();
+      console.log('Admin Users Data:', data);
+      if (data.status === 'success') {
+        cache.adminUsers = data.data;
+        return data.data;
+      }
+      throw new Error(data.message || 'Failed to fetch admin users');
+    } catch (error: any) {
+      console.error('Fetch Admin Users Error:', error);
+      throw new Error(error.message === 'Failed to fetch' ? 'Network Error: Google Script unreachable. Please check your internet connection or Script URL.' : (error.message || 'Network Error'));
+    }
   },
 
   async addAdminUser(data: Partial<AdminUserRecord>): Promise<void> {
     if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) return;
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'addAdminUser', data: { ...data, role: data.role || 'User', accessSidebar: data.accessSidebar || 'Dashboard', profileImage: data.profileImage || '' } }),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    });
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'addAdminUser', data: { ...data, role: data.role || 'User', accessSidebar: data.accessSidebar || 'Dashboard', profileImage: data.profileImage || '' } }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const responseData = await response.json();
+      if (responseData.status !== 'success') throw new Error(responseData.message || 'Failed to add admin user');
+      this.clearCache('adminUsers');
+    } catch (error: any) {
+      console.error('Add Admin User Error:', error);
+      throw new Error(error.message || 'Network Error');
+    }
   },
 
   async updateAdminUserAccess(rowId: number, role: string, accessSidebar: string, userName: string, profileImage?: string): Promise<void> {
     if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) return;
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'updateAdminUserAccess', rowId, role, accessSidebar, userName, profileImage }),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    });
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'updateAdminUserAccess', rowId, role, accessSidebar, userName, profileImage }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const responseData = await response.json();
+      if (responseData.status !== 'success') throw new Error(responseData.message || 'Failed to update user access');
+      this.clearCache('adminUsers');
+    } catch (error: any) {
+      console.error('Update Admin Access Error:', error);
+      throw new Error(error.message || 'Network Error');
+    }
   },
 
   async uploadProfileImage(rowId: number, base64Data: string, fileName: string, mimeType: string): Promise<string> {
@@ -155,7 +214,10 @@ export const apiService = {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
       });
       const data = await response.json();
-      if (data.status === 'success') return data.imageUrl;
+      if (data.status === 'success') {
+        this.clearCache('adminUsers');
+        return data.imageUrl;
+      }
       throw new Error(data.message || 'Upload failed');
     } catch (error: any) {
       throw new Error(error.message || 'Network Error');
@@ -164,20 +226,36 @@ export const apiService = {
 
   async updateAdminUserStatus(rowId: number, status: 'Active' | 'Blocked'): Promise<void> {
     if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) return;
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'updateAdminUserStatus', rowId, status }),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    });
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'updateAdminUserStatus', rowId, status }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const responseData = await response.json();
+      if (responseData.status !== 'success') throw new Error(responseData.message || 'Failed to update user status');
+      this.clearCache('adminUsers');
+    } catch (error: any) {
+      console.error('Update Admin Status Error:', error);
+      throw new Error(error.message || 'Network Error');
+    }
   },
 
   async updateMarkStatus(rowId: number, markIndex: number, status: string, adminInfo?: string): Promise<void> {
     if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) return;
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'updateMarkStatus', rowId, markIndex, status, adminInfo }),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    });
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'updateMarkStatus', rowId, markIndex, status, adminInfo }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const responseData = await response.json();
+      if (responseData.status !== 'success') throw new Error(responseData.message || 'Failed to update mark status');
+      this.clearCache('users');
+    } catch (error: any) {
+      console.error('Update Mark Status Error:', error);
+      throw new Error(error.message || 'Network Error');
+    }
   },
 
   async updatePaymentStatus(rowIds: number[], status: string, aggregateData: any): Promise<void> {
@@ -188,14 +266,25 @@ export const apiService = {
       });
       return;
     }
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'updatePaymentStatus', rowIds, status, aggregateData }),
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    });
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'updatePaymentStatus', rowIds, status, aggregateData }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const responseData = await response.json();
+      if (responseData.status !== 'success') throw new Error(responseData.message || 'Failed to update payment status');
+      this.clearCache('users');
+    } catch (error: any) {
+      console.error('Update Payment Status Error:', error);
+      throw new Error(error.message || 'Network Error');
+    }
   },
 
-  async getBranches(): Promise<Branch[]> {
+  async getBranches(forceRefresh = false): Promise<Branch[]> {
+    if (!forceRefresh && cache.branches) {
+      return cache.branches;
+    }
     if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) {
       return [
         { rowId: 2, branchName: 'Farmgate', pin: '31', branchId: 'BR-01', coordinatorName: 'Mahbub' },
@@ -209,11 +298,14 @@ export const apiService = {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
       });
       const data = await response.json();
-      if (data.status === 'success') return data.data || [];
+      if (data.status === 'success') {
+        cache.branches = data.data || [];
+        return cache.branches!;
+      }
       throw new Error(data.message || 'Failed to fetch branches');
     } catch (error: any) {
       console.error('Fetch Branches Error:', error);
-      throw new Error('Failed to fetch branches. Please update your Google Apps Script.');
+      throw new Error(error.message === 'Failed to fetch' ? 'Network Error: Google Script unreachable. Please check your internet connection or Script URL.' : (error.message || 'Network Error'));
     }
   },
 
@@ -227,6 +319,7 @@ export const apiService = {
       });
       const responseData = await response.json();
       if (responseData.status !== 'success') throw new Error(responseData.message || 'Failed to save branch');
+      this.clearCache('branches');
     } catch (error: any) {
       console.error('Save Branch Error:', error);
       throw new Error(error.message || 'Network Error');
@@ -243,13 +336,17 @@ export const apiService = {
       });
       const data = await response.json();
       if (data.status !== 'success') throw new Error(data.message || 'Failed to delete branch');
+      this.clearCache('branches');
     } catch (error: any) {
       console.error('Delete Branch Error:', error);
       throw new Error(error.message || 'Network Error');
     }
   },
 
-  async getExaminers(): Promise<Examiner[]> {
+  async getExaminers(forceRefresh = false): Promise<Examiner[]> {
+    if (!forceRefresh && cache.examiners) {
+      return cache.examiners;
+    }
     if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) {
       return [
         { rowId: 2, teacherName: 'Satu Biswas', tpin: '31', branchId: 'BR-01' },
@@ -263,11 +360,14 @@ export const apiService = {
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
       });
       const data = await response.json();
-      if (data.status === 'success') return data.data || [];
+      if (data.status === 'success') {
+        cache.examiners = data.data || [];
+        return cache.examiners!;
+      }
       throw new Error(data.message || 'Failed to fetch examiners');
     } catch (error: any) {
       console.error('Fetch Examiners Error:', error);
-      throw new Error('Failed to fetch examiners. Please update your Google Apps Script.');
+      throw new Error(error.message === 'Failed to fetch' ? 'Network Error: Google Script unreachable. Please check your internet connection or Script URL.' : (error.message || 'Network Error'));
     }
   },
 
@@ -281,6 +381,7 @@ export const apiService = {
       });
       const responseData = await response.json();
       if (responseData.status !== 'success') throw new Error(responseData.message || 'Failed to save examiner');
+      this.clearCache('examiners');
     } catch (error: any) {
       console.error('Save Examiner Error:', error);
       throw new Error(error.message || 'Network Error');
@@ -297,6 +398,7 @@ export const apiService = {
       });
       const data = await response.json();
       if (data.status !== 'success') throw new Error(data.message || 'Failed to delete examiner');
+      this.clearCache('examiners');
     } catch (error: any) {
       console.error('Delete Examiner Error:', error);
       throw new Error(error.message || 'Network Error');

@@ -33,12 +33,12 @@ export function Settings({ onNotify }: SettingsProps) {
   // Delete Confirm State
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'branch' | 'examiner', id: number } | null>(null);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [fetchedBranches, fetchedExaminers] = await Promise.all([
-        apiService.getBranches(),
-        apiService.getExaminers()
+        apiService.getBranches(silent),
+        apiService.getExaminers(silent)
       ]);
       setBranches(fetchedBranches);
       setExaminers(fetchedExaminers);
@@ -51,6 +51,9 @@ export function Settings({ onNotify }: SettingsProps) {
 
   useEffect(() => {
     fetchData();
+    // Background refresh for settings data
+    const interval = setInterval(() => fetchData(true), 60000); // Every 1 minute
+    return () => clearInterval(interval);
   }, []);
 
   const handleSaveBranch = async (e: React.FormEvent) => {

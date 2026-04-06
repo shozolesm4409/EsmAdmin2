@@ -55,11 +55,11 @@ export default function App() {
     if (!silent) setIsLoading(true);
     try {
       if (currentView === 'dashboard' || currentView === 'marksheet' || currentView === 'paymentsheet' || currentView === 'reports') {
-        const data = await apiService.getUsers();
+        const data = await apiService.getUsers(silent);
         setUsers(data);
       }
       if (currentView === 'users' || currentView === 'profile') {
-        const data = await apiService.getAdminUsers();
+        const data = await apiService.getAdminUsers(silent);
         setAdminUsers(data);
       }
       setError(null);
