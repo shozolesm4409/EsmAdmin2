@@ -133,14 +133,14 @@ export function AdminUserTable({ users, onAdd, onToggleStatus, onUpdateAccess, o
       {/* Edit Access Modal */}
       {editingAccess && (
         <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
               <h3 className="text-lg font-bold text-slate-900">Edit Role & Access</h3>
               <button onClick={() => setEditingAccess(null)} className="text-slate-400 hover:text-slate-600">
                 <Plus className="rotate-45" size={24} />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1">User Name</label>

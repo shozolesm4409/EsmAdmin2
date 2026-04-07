@@ -59,7 +59,14 @@ export const apiService = {
         body: JSON.stringify({ action: 'adminLogin', userId, password }),
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
       });
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Invalid JSON response:', text);
+        throw new Error('Invalid response from server. The Google Script might not be deployed as a Web App with "Anyone" access.');
+      }
       if (data.status === 'success') return data.user as AdminUser;
       throw new Error(data.message || 'Login failed');
     } catch (error: any) {
@@ -81,7 +88,14 @@ export const apiService = {
         body: JSON.stringify({ action: 'readAdminData' }),
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
       });
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Invalid JSON response:', text);
+        throw new Error('Invalid response from server. The Google Script might not be deployed as a Web App with "Anyone" access.');
+      }
       console.log('Users Data:', data);
       if (data.status === 'success') {
         cache.users = data.data;
@@ -158,7 +172,14 @@ export const apiService = {
         body: JSON.stringify({ action: 'readAdminUsers' }),
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
       });
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Invalid JSON response:', text);
+        throw new Error('Invalid response from server. The Google Script might not be deployed as a Web App with "Anyone" access.');
+      }
       console.log('Admin Users Data:', data);
       if (data.status === 'success') {
         cache.adminUsers = data.data;

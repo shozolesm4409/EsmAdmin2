@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { User } from '../types';
-import { Search, Wallet, Loader2, Eye } from 'lucide-react';
-import { DetailsPopup } from './DetailsPopup';
+import { Search, Wallet, Loader2 } from 'lucide-react';
 
 interface PaymentSheetProps {
   users: User[];
@@ -32,19 +31,19 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
   const [activeStatus, setActiveStatus] = useState('Pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
-  const [selectedGroup, setSelectedGroup] = useState<any>(null);
 
   const statusCounts = React.useMemo(() => {
     const counts = { Pending: 0, Updated: 0 };
     const subjectUsers = users.filter(u => u.subject === activeSubject);
     
-    // Group by teacher-tpin-branch to match the table rows
+    // Group by teacher-tpin-branch-status to match the table rows
     const uniqueRows = new Set();
     subjectUsers.forEach(u => {
-      const key = `${u.teacherName}-${u.teacherTPIN}-${u.branchName}`;
+      const status = u.paymentStatus || 'Pending';
+      const key = `${u.teacherName}-${u.teacherTPIN}-${u.branchName}-${status}`;
       if (!uniqueRows.has(key)) {
         uniqueRows.add(key);
-        if (u.paymentStatus === 'Updated') counts.Updated++;
+        if (status === 'Updated') counts.Updated++;
         else counts.Pending++;
       }
     });
@@ -68,21 +67,21 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
         acc.push(teacherGroup);
       }
 
-      let branch = teacherGroup.branches.find((b: any) => b.branchName === current.branchName);
+      const currentStatus = current.paymentStatus || 'Pending';
+      // Include status in the branch search to separate them based on status
+      let branch = teacherGroup.branches.find((b: any) => b.branchName === current.branchName && b.status === currentStatus);
+      
       if (branch) {
         branch.bvCount += Number(current.bvCount || 0);
         branch.evCount += Number(current.evCount || 0);
         branch.rowIds.push(current.rowId);
-        if (current.paymentStatus === 'Updated') {
-          branch.status = 'Updated';
-        }
       } else {
         teacherGroup.branches.push({
           branchName: current.branchName,
           bvCount: Number(current.bvCount || 0),
           evCount: Number(current.evCount || 0),
           rowIds: [current.rowId],
-          status: current.paymentStatus || 'Pending'
+          status: currentStatus
         });
       }
       return acc;
@@ -103,14 +102,14 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
     if (newStatus === 'Updated') {
       setIsUpdating(group.key);
       try {
-        // Collect all rowIds from all branches
+        // Collect all rowIds from all branches in the current filtered group
         const allRowIds = group.branches.flatMap((b: any) => b.rowIds);
         
         // Aggregate data for the update
         const aggregateData = {
           teacherName: group.teacherName,
           teacherTPIN: group.teacherTPIN,
-          branchName: 'All Branches',
+          branchName: group.branches.map((b: any) => b.branchName).join(', '),
           bvCount: group.branches.reduce((sum: number, b: any) => sum + b.bvCount, 0),
           evCount: group.branches.reduce((sum: number, b: any) => sum + b.evCount, 0),
           status: newStatus
@@ -192,7 +191,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
                 <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Branch</th>
                 <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">BV Count</th>
                 <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">EV Count</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -216,20 +215,14 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
                         <td className="px-6 py-1 text-sm font-bold text-blue-600">{branch.bvCount}</td>
                         <td className="px-6 py-1 text-sm font-bold text-emerald-600">{branch.evCount}</td>
                         {bIdx === 0 && (
-                          <td className="px-6 py-1" rowSpan={group.branches.length}>
-                            <div className="flex items-center gap-2">
-                              <button 
-                                onClick={() => setSelectedGroup(group)}
-                                className="p-1 hover:bg-slate-200 rounded-lg transition-colors text-slate-400 hover:text-slate-600"
-                              >
-                                <Eye size={16} />
-                              </button>
+                          <td className="px-6 py-1 text-right" rowSpan={group.branches.length}>
+                            <div className="flex items-center justify-end gap-2">
                               <select 
-                                value={group.branches.every((b: any) => b.status === 'Updated') ? 'Updated' : 'Pending'} 
+                                value={activeStatus} 
                                 onChange={(e) => handleStatusChange(group, e.target.value)}
-                                disabled={isUpdating === group.key || group.branches.every((b: any) => b.status === 'Updated')}
+                                disabled={isUpdating === group.key || activeStatus === 'Updated'}
                                 className={`text-[10px] font-bold px-2 py-1 rounded-lg border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer shadow-sm ${
-                                  group.branches.every((b: any) => b.status === 'Updated')
+                                  activeStatus === 'Updated'
                                     ? 'bg-emerald-500 text-white cursor-default' 
                                     : 'bg-amber-500 text-white hover:bg-amber-600'
                                 }`}
@@ -257,26 +250,6 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
           </table>
         </div>
       </div>
-      {selectedGroup && (
-        <DetailsPopup 
-          isOpen={!!selectedGroup} 
-          onClose={() => setSelectedGroup(null)}
-          title={`Details for ${selectedGroup.teacherName}`}
-          data={{
-            teacherName: selectedGroup.teacherName,
-            teacherTPIN: selectedGroup.teacherTPIN,
-            users: selectedGroup.branches.flatMap((b: any) => b.rowIds.map((id: number) => {
-              const user = users.find(u => u.rowId === id);
-              return {
-                teacherName: user?.teacherName,
-                subject: user?.subject,
-                bvCount: user?.bvCount,
-                evCount: user?.evCount
-              };
-            }))
-          }}
-        />
-      )}
     </div>
   );
 }

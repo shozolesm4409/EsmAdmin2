@@ -15,6 +15,7 @@ import { MarkSheet } from './components/MarkSheet';
 import { PaymentSheet } from './components/PaymentSheet';
 import { Profile } from './components/Profile';
 import { Settings as SettingsPage } from './components/Settings';
+import { Notifications } from './components/Notifications';
 import { apiService } from './services/api';
 import { User, UserFormData, AdminUser, AdminUserRecord } from './types';
 import { Loader2, CheckCircle2, AlertCircle, X, Lock, Settings, FileSpreadsheet, Wallet } from 'lucide-react';
@@ -44,9 +45,10 @@ export default function App() {
   const [viewingUser, setViewingUser] = useState<User | null>(null);
   const [viewingAdminUser, setViewingAdminUser] = useState<AdminUserRecord | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<string>('');
 
   // Admin User Form State
-  const [newAdminUser, setNewAdminUser] = useState({ userId: '', password: '', userName: '', role: 'User', accessSidebar: 'Dashboard' });
+  const [newAdminUser, setNewAdminUser] = useState({ userId: '', password: '', userName: '', role: 'User', accessSidebar: "Dashboard'View', Reports'View', Profile" });
 
   // Notification state
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
@@ -63,9 +65,9 @@ export default function App() {
         setAdminUsers(data);
       }
       setError(null);
-    } catch (err) {
-      setError('Failed to fetch data. Please check your API configuration.');
-      showNotification('error', 'Failed to fetch data');
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch data. Please check your API configuration.');
+      showNotification('error', err.message || 'Failed to fetch data');
     } finally {
       setIsLoading(false);
     }
@@ -98,6 +100,13 @@ export default function App() {
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
+  };
+
+  const handleViewChange = (view: string) => {
+    if (view !== 'marksheet') {
+      setSelectedSubject('');
+    }
+    setCurrentView(view);
   };
 
   const handleSaveData = async (formData: UserFormData) => {
@@ -141,7 +150,7 @@ export default function App() {
       await apiService.addAdminUser(newAdminUser);
       showNotification('success', 'Admin user added successfully');
       setIsAdminFormModalOpen(false);
-      setNewAdminUser({ userId: '', password: '', userName: '', role: 'User', accessSidebar: 'Dashboard' });
+      setNewAdminUser({ userId: '', password: '', userName: '', role: 'User', accessSidebar: "Dashboard'View', Reports'View', Profile" });
       fetchData();
     } catch (err) {
       showNotification('error', 'Failed to add admin user');
@@ -255,7 +264,7 @@ export default function App() {
         isOpen={isSidebarOpen} 
         setIsOpen={setIsSidebarOpen} 
         currentView={currentView}
-        onViewChange={setCurrentView}
+        onViewChange={handleViewChange}
         userAccess={admin?.accessSidebar || 'Dashboard'}
         onLogout={handleLogout}
       />
@@ -265,8 +274,9 @@ export default function App() {
           onMenuClick={() => setIsSidebarOpen(true)} 
           userName={admin?.name || 'Admin'} 
           userRole={admin?.role || 'User'} 
-          onViewChange={setCurrentView}
+          onViewChange={handleViewChange}
           onLogout={handleLogout}
+          pendingCount={users.reduce((acc, user) => acc + (user.extraData?.filter(m => m.status === 'Pending').length || 0), 0)}
         />
         
         <div className="p-4 lg:p-8 pt-4 lg:pt-4 flex-1">
@@ -303,7 +313,15 @@ export default function App() {
                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-red-900 mb-2">Something went wrong</h3>
                 <p className="text-red-700 mb-6">{error}</p>
-                <button onClick={fetchData} className="px-6 py-2 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors">Try Again</button>
+                <button 
+                  onClick={() => {
+                    apiService.clearCache();
+                    fetchData();
+                  }} 
+                  className="px-6 py-2 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors"
+                >
+                  Try Again
+                </button>
               </div>
             ) : (
               <>
@@ -322,6 +340,20 @@ export default function App() {
                     onBack={() => setCurrentView('users')}
                   />
                 )}
+                {currentView === 'notifications' && (
+                  <Notifications 
+                    users={users}
+                    onViewDetails={(user) => {
+                      setViewingUser(user);
+                      setCurrentView('userDetails');
+                    }}
+                    onViewMarksheet={(subject) => {
+                      setSelectedSubject(subject);
+                      setCurrentView('marksheet');
+                    }}
+                    onBack={() => setCurrentView('dashboard')}
+                  />
+                )}
                 {currentView === 'dashboard' && (
                   <UserTable 
                     users={users} 
@@ -330,6 +362,7 @@ export default function App() {
                     onAdd={() => { setEditingUser(null); setIsFormModalOpen(true); }}
                     onViewDetails={(u) => { setViewingUser(u); setCurrentView('userDetails'); }}
                     readOnly={admin.accessSidebar.includes("Dashboard'View'")}
+                    adminAccess={admin.accessSidebar}
                   />
                 )}
                 {currentView === 'reports' && (
@@ -341,6 +374,7 @@ export default function App() {
                     onStatusUpdate={handleUpdateMarkStatus} 
                     adminAccess={admin.accessSidebar}
                     onNotify={showNotification}
+                    initialSubject={selectedSubject}
                   />
                 )}
                 {currentView === 'paymentsheet' && (

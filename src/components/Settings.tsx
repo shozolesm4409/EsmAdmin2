@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Branch, Examiner } from '../types';
 import { apiService } from '../services/api';
-import { Building2, GraduationCap, Plus, Edit2, Trash2, Loader2, Eye } from 'lucide-react';
+import { Building2, GraduationCap, Plus, Edit2, Trash2, Loader2, Eye, Search } from 'lucide-react';
 import { Modal } from './Modal';
 import { ConfirmDialog } from './ConfirmDialog';
 import { DetailsPopup } from './DetailsPopup';
@@ -32,6 +32,7 @@ export function Settings({ onNotify }: SettingsProps) {
 
   // Delete Confirm State
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'branch' | 'examiner', id: number } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchData = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -48,6 +49,16 @@ export function Settings({ onNotify }: SettingsProps) {
       setLoading(false);
     }
   };
+
+  const filteredBranches = branches.filter(branch => 
+    (branch.branchName || '').toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (branch.pin || '').toString().toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredExaminers = examiners.filter(examiner => 
+    (examiner.teacherName || '').toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (examiner.tpin || '').toString().toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     fetchData();
@@ -139,10 +150,21 @@ export function Settings({ onNotify }: SettingsProps) {
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Settings</h2>
+            <h2 className="text-xl font-bold text-slate-900">Branche&Examiner</h2>
             <p className="text-sm text-slate-500">Manage Branches and Examiners data.</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col md:flex-row items-center gap-4">
+            <div className="relative w-full md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder={activeTab === 'branches' ? "Search Branches or PIN..." : "Search Teacher or TPIN..."}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              />
+            </div>
+            <div className="flex items-center gap-4 w-full md:w-auto">
             {activeTab === 'branches' && (
               <button onClick={openAddBranch} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-colors cursor-pointer">
                 <Plus size={18} />
@@ -177,8 +199,9 @@ export function Settings({ onNotify }: SettingsProps) {
             </div>
           </div>
         </div>
+      </div>
 
-        {activeTab === 'branches' && (
+      {activeTab === 'branches' && (
           <div className="space-y-4">
             <div className="overflow-x-auto overflow-y-auto max-h-[60vh] rounded-xl border border-slate-200">
               <table className="w-full text-left border-collapse relative">
@@ -192,7 +215,7 @@ export function Settings({ onNotify }: SettingsProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {branches.map(branch => (
+                  {filteredBranches.map(branch => (
                     <tr key={branch.rowId} className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-1.5 font-medium text-slate-900">{branch.branchName}</td>
                       <td className="p-1.5 text-slate-600">{branch.pin}</td>
@@ -213,9 +236,9 @@ export function Settings({ onNotify }: SettingsProps) {
                       </td>
                     </tr>
                   ))}
-                  {branches.length === 0 && (
+                  {filteredBranches.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-slate-500 italic">No branches found.</td>
+                      <td colSpan={5} className="p-8 text-center text-slate-500 italic">No branches found matching your search.</td>
                     </tr>
                   )}
                 </tbody>
@@ -237,7 +260,7 @@ export function Settings({ onNotify }: SettingsProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {examiners.map(examiner => (
+                  {filteredExaminers.map(examiner => (
                     <tr key={examiner.rowId} className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-1.5 font-medium text-slate-900">{examiner.teacherName}</td>
                       <td className="p-1.5 text-slate-600">{examiner.tpin}</td>
@@ -254,9 +277,9 @@ export function Settings({ onNotify }: SettingsProps) {
                       </td>
                     </tr>
                   ))}
-                  {examiners.length === 0 && (
+                  {filteredExaminers.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="p-8 text-center text-slate-500 italic">No examiners found.</td>
+                      <td colSpan={4} className="p-8 text-center text-slate-500 italic">No examiners found matching your search.</td>
                     </tr>
                   )}
                 </tbody>

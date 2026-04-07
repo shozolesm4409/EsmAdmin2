@@ -7,9 +7,10 @@ interface MarkSheetProps {
   onStatusUpdate: (rowId: number, markIndex: number, status: string) => Promise<void>;
   adminAccess?: string;
   onNotify?: (type: 'success' | 'error', message: string) => void;
+  initialSubject?: string;
 }
 
-export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }: MarkSheetProps) {
+export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, initialSubject }: MarkSheetProps) {
   const allSubjects = Array.from(new Set(users.map(u => u.subject))).filter(Boolean);
   
   const subjects = React.useMemo(() => {
@@ -28,12 +29,44 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }:
     return [];
   }, [allSubjects, adminAccess]);
 
-  const [activeSubject, setActiveSubject] = useState(subjects[0] || '');
+  const [activeSubject, setActiveSubject] = useState(() => {
+    if (initialSubject && subjects.includes(initialSubject)) {
+      return initialSubject;
+    }
+    return subjects[0] || '';
+  });
+
+  React.useEffect(() => {
+    if (initialSubject && subjects.includes(initialSubject)) {
+      setActiveSubject(initialSubject);
+    }
+  }, [initialSubject, subjects]);
+
   const [activeStatus, setActiveStatus] = useState('Pending');
+
   const [searchTerm, setSearchTerm] = useState('');
   const [updating, setUpdating] = useState<string | null>(null);
   const [previewJSON, setPreviewJSON] = useState<string | null>(null);
   const [previewCount, setPreviewCount] = useState(0);
+  const [waitingRolls, setWaitingRolls] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('waitingRolls');
+    if (saved) {
+      try {
+        return new Set(JSON.parse(saved));
+      } catch (e) {
+        return new Set();
+      }
+    }
+    return new Set();
+  });
+
+  // Persist waitingRolls to localStorage
+  React.useEffect(() => {
+    localStorage.setItem('waitingRolls', JSON.stringify(Array.from(waitingRolls)));
+  }, [waitingRolls]);
+
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   const filteredData = users
     .filter(u => u.subject === activeSubject)
@@ -50,11 +83,65 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }:
       return matchesSearch && matchesStatus;
     });
 
+  // Clear selection when subject or status changes
+  React.useEffect(() => {
+    setSelectedRows(new Set());
+  }, [activeSubject, activeStatus]);
+
+  const toggleSelectAll = () => {
+    if (selectedRows.size === filteredData.length) {
+      setSelectedRows(new Set());
+    } else {
+      const allKeys = new Set(filteredData.map(item => `${item.rowId}-${item.markIndex}`));
+      setSelectedRows(allKeys);
+    }
+  };
+
+  const toggleSelectRow = (key: string) => {
+    const next = new Set(selectedRows);
+    if (next.has(key)) {
+      next.delete(key);
+    } else {
+      next.add(key);
+    }
+    setSelectedRows(next);
+  };
+
+  const handleBulkStatusUpdate = async (newStatus: string) => {
+    if (selectedRows.size === 0) return;
+    setIsBulkUpdating(true);
+    try {
+      const updates = Array.from(selectedRows).map((key: string) => {
+        const [rowId, markIndex] = key.split('-').map(Number);
+        return onStatusUpdate(rowId, markIndex, newStatus);
+      });
+      await Promise.all(updates);
+      setSelectedRows(new Set());
+      if (onNotify) onNotify('success', `Successfully updated ${updates.length} records!`);
+    } catch (error) {
+      if (onNotify) onNotify('error', 'Failed to update some records.');
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
   const handleStatusChange = async (rowId: number, markIndex: number, newStatus: string) => {
     const updateKey = `${rowId}-${markIndex}`;
     setUpdating(updateKey);
     try {
       await onStatusUpdate(rowId, markIndex, newStatus);
+      // Remove from waiting if it was there
+      const user = users.find(u => u.rowId === rowId);
+      if (user && user.extraData && user.extraData[markIndex]) {
+        const roll = user.extraData[markIndex].roll?.toString();
+        if (roll) {
+          setWaitingRolls(prev => {
+            const next = new Set(prev);
+            next.delete(roll);
+            return next;
+          });
+        }
+      }
     } finally {
       setUpdating(null);
     }
@@ -76,15 +163,29 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }:
   const handlePreviewJSON = () => {
     if (activeStatus !== 'Pending') return;
     
-    const jsonData = filteredData.map((item, idx) => ({
-      slno: (idx + 1).toString().padStart(2, '0'),
-      roll: (item.roll || '').toString(),
-      mark: (item.mark || '').toString()
-    }));
+    const rolls = new Set<string>();
+    const jsonData = filteredData.map((item, idx) => {
+      if (item.roll) rolls.add(item.roll.toString());
+      return {
+        slno: (idx + 1).toString().padStart(2, '0'),
+        roll: (item.roll || '').toString(),
+        mark: (item.mark || '').toString()
+      };
+    });
 
     const jsonString = JSON.stringify(jsonData, null, 2);
     setPreviewJSON(jsonString);
     setPreviewCount(jsonData.length);
+    setWaitingRolls(prev => {
+      const next = new Set(prev);
+      rolls.forEach(r => next.add(r));
+      return next;
+    });
+  };
+
+  const handleClosePreview = () => {
+    setPreviewJSON(null);
+    // Don't clear waitingRolls here to keep them persistent as requested
   };
 
   const handleConfirmCopy = () => {
@@ -95,6 +196,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }:
       } else {
         alert('JSON copied to clipboard!');
       }
+      // Keep waiting rolls visible even after copy, as per user request "to understand new data"
       setPreviewJSON(null);
     }).catch(err => {
       console.error('Failed to copy: ', err);
@@ -173,10 +275,47 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }:
           </div>
         </div>
 
+        {selectedRows.size > 0 && activeStatus !== 'Updated' && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-blue-700">{selectedRows.size} records selected</span>
+              <div className="h-4 w-px bg-blue-200" />
+              <span className="text-xs text-blue-600">Update status to:</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {['Pending', 'Updated', 'Wrong'].map(status => (
+                <button
+                  key={status}
+                  onClick={() => handleBulkStatusUpdate(status)}
+                  disabled={isBulkUpdating}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all shadow-sm flex items-center gap-2 ${
+                    status === 'Pending' ? 'bg-amber-500 hover:bg-amber-600' :
+                    status === 'Updated' ? 'bg-emerald-500 hover:bg-emerald-600' :
+                    'bg-rose-500 hover:bg-rose-600'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {isBulkUpdating ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+                  {status}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto border border-slate-100 rounded-xl max-h-[400px] overflow-y-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
+                <th className="px-4 py-3 w-10">
+                  {activeStatus !== 'Updated' && (
+                    <input 
+                      type="checkbox" 
+                      checked={filteredData.length > 0 && selectedRows.size === filteredData.length}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  )}
+                </th>
                 <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">SL</th>
                 <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Branch</th>
                 <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Roll</th>
@@ -185,19 +324,32 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }:
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredData.map((item, idx) => (
-                <tr key={`${item.rowId}-${item.markIndex}`} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-1 text-sm text-slate-500">{idx + 1}</td>
+              {filteredData.map((item, idx) => {
+                const key = `${item.rowId}-${item.markIndex}`;
+                return (
+                  <tr key={key} className={`hover:bg-slate-50/50 transition-colors ${selectedRows.has(key) ? 'bg-blue-50/30' : ''}`}>
+                    <td className="px-4 py-1">
+                      {activeStatus !== 'Updated' && (
+                        <input 
+                          type="checkbox" 
+                          checked={selectedRows.has(key)}
+                          onChange={() => toggleSelectRow(key)}
+                          className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                      )}
+                    </td>
+                    <td className="px-6 py-1 text-sm text-slate-500">{idx + 1}</td>
                   <td className="px-6 py-1 text-sm font-medium text-slate-900">{item.branchName}</td>
                   <td className="px-6 py-1 text-sm font-bold text-blue-600">{item.roll}</td>
                   <td className="px-6 py-1 text-sm text-slate-600">{item.mark}</td>
                   <td className="px-6 py-1">
                     <div className="flex items-center gap-2">
                       <select
-                        value={item.status}
+                        value={waitingRolls.has(item.roll?.toString() || '') ? 'Waiting' : item.status}
                         disabled={updating === `${item.rowId}-${item.markIndex}`}
                         onChange={(e) => handleStatusChange(item.rowId, item.markIndex, e.target.value)}
                         className={`text-[10px] font-bold px-2 py-1 rounded-lg border-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition-all shadow-sm ${
+                          waitingRolls.has(item.roll?.toString() || '') ? 'bg-indigo-500 text-white' :
                           item.status === 'Updated' ? 'bg-emerald-500 text-white hover:bg-emerald-600' :
                           item.status === 'Wrong' ? 'bg-rose-500 text-white hover:bg-rose-600' :
                           'bg-amber-500 text-white hover:bg-amber-600'
@@ -206,6 +358,9 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }:
                         <option value="Pending">Pending</option>
                         <option value="Updated">Updated</option>
                         <option value="Wrong">Wrong</option>
+                        {waitingRolls.has(item.roll?.toString() || '') && (
+                          <option value="Waiting">Waiting</option>
+                        )}
                       </select>
                       {updating === `${item.rowId}-${item.markIndex}` && (
                         <Loader2 size={12} className="animate-spin text-blue-600" />
@@ -213,7 +368,8 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }:
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+            })}
               {filteredData.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
@@ -235,7 +391,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }:
                 <h3 className="text-lg font-bold text-slate-900">JSON Preview</h3>
                 <p className="text-sm text-slate-500">Subject: <span className="font-semibold text-slate-700">{activeSubject}</span> • <span className="font-semibold text-slate-700">{previewCount}</span> records</p>
               </div>
-              <button onClick={() => setPreviewJSON(null)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <button onClick={handleClosePreview} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
               </button>
             </div>
@@ -246,7 +402,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify }:
             </div>
             <div className="p-4 border-t border-slate-100 flex justify-end gap-3 bg-white">
               <button 
-                onClick={() => setPreviewJSON(null)}
+                onClick={handleClosePreview}
                 className="px-6 py-2 border border-slate-200 rounded-xl font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Cancel

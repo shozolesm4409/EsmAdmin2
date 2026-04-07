@@ -19,7 +19,7 @@ const navItems = [
   { icon: Wallet, label: 'PaymentSheet', id: 'paymentsheet' },
   { icon: Users, label: 'Users', id: 'users' },
   { icon: UserCircle, label: 'Profile', id: 'profile' },
-  { icon: Settings, label: 'Settings', id: 'settings' },
+  { icon: Settings, label: 'Branche&Examiner', id: 'settings' },
 ];
 
 export function Sidebar({ isOpen, setIsOpen, currentView, onViewChange, userAccess, onLogout, profileImage }: SidebarProps) {
@@ -93,7 +93,7 @@ export function Sidebar({ isOpen, setIsOpen, currentView, onViewChange, userAcce
             <LogOut size={20} />
             <span className="font-medium">Logout</span>
           </button>
-          <span className="text-xs text-slate-500 font-medium px-2">Version: 3.5</span>
+          <span className="text-xs text-slate-500 font-medium px-2">Version: 4.0</span>
         </div>
       </aside>
     </>

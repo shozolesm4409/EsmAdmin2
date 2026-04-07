@@ -10,12 +10,13 @@ interface UserTableProps {
   onAdd: () => void;
   onViewDetails: (user: User) => void;
   readOnly?: boolean;
+  adminAccess?: string;
 }
 
 type SortField = keyof User;
 type SortOrder = 'asc' | 'desc';
 
-export function UserTable({ users, onEdit, onDelete, onAdd, onViewDetails, readOnly = false }: UserTableProps) {
+export function UserTable({ users, onEdit, onDelete, onAdd, onViewDetails, readOnly = false, adminAccess = '' }: UserTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('branchName');
@@ -32,8 +33,28 @@ export function UserTable({ users, onEdit, onDelete, onAdd, onViewDetails, readO
     }
   };
 
+  // Parse Dashboard subjects from adminAccess
+  const dashboardSubjects = React.useMemo(() => {
+    if (!adminAccess || adminAccess === 'Full') return [];
+    const modules = adminAccess.split(/,(?=(?:(?:[^']*'){2})*[^']*$)/).map(s => s.trim());
+    const dashboardModule = modules.find(m => m.startsWith('Dashboard'));
+    if (!dashboardModule) return [];
+    
+    const match = dashboardModule.match(/'([^']+)'/);
+    if (match && match[1] !== 'View') {
+      return match[1].split(',').map(s => s.trim()).filter(Boolean);
+    }
+    return [];
+  }, [adminAccess]);
+
   // Get unique subjects for dynamic tabs
-  const uniqueSubjects = Array.from(new Set(users.map(u => u.subject).filter(Boolean))).sort();
+  const uniqueSubjects = React.useMemo(() => {
+    const subjects = Array.from(new Set(users.map(u => u.subject).filter(Boolean))).sort();
+    if (dashboardSubjects.length > 0) {
+      return subjects.filter(s => dashboardSubjects.includes(s));
+    }
+    return subjects;
+  }, [users, dashboardSubjects]);
 
   const filteredUsers = users.filter(user => {
     const search = searchTerm.toLowerCase();
@@ -45,7 +66,10 @@ export function UserTable({ users, onEdit, onDelete, onAdd, onViewDetails, readO
     
     const matchesTab = activeTab === 'all' || user.subject === activeTab;
     
-    return matchesSearch && matchesTab;
+    // Filter by dashboard subjects if defined
+    const matchesAccess = dashboardSubjects.length === 0 || dashboardSubjects.includes(user.subject);
+    
+    return matchesSearch && matchesTab && matchesAccess;
   });
 
   const sortedUsers = [...filteredUsers].sort((a, b) => {

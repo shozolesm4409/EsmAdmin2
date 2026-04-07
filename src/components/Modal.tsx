@@ -38,9 +38,9 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'lg' }: Mod
             initial={{ scale: 0.95, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className={cn("relative bg-white rounded-2xl shadow-2xl w-full overflow-hidden", maxWidthClass)}
+            className={cn("relative bg-white rounded-2xl shadow-2xl w-full overflow-hidden max-h-[90vh] flex flex-col", maxWidthClass)}
           >
-            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 shrink-0">
               <h3 className="text-xl font-bold text-slate-900">{title}</h3>
               <button 
                 onClick={onClose}
@@ -49,7 +49,7 @@ export function Modal({ isOpen, onClose, title, children, maxWidth = 'lg' }: Mod
                 <X size={20} />
               </button>
             </div>
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1">
               {children}
             </div>
           </motion.div>

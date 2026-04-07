@@ -62,12 +62,12 @@ export function DetailsModal({ isOpen, onClose, user, admin, onUpdateSuccess }: 
                     <select 
                       value={item.status} 
                       onChange={(e) => handleStatusChange(idx, e.target.value)}
-                      disabled={isSaving === idx}
+                      disabled={isSaving === idx || admin?.accessSidebar.includes("Dashboard'View'")}
                       className={`text-xs font-bold px-3 py-1.5 rounded-xl border-none outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer shadow-sm ${
                         item.status === 'Updated' ? 'bg-emerald-500 text-white hover:bg-emerald-600' :
                         item.status === 'Wrong' ? 'bg-rose-500 text-white hover:bg-rose-600' :
                         'bg-amber-500 text-white hover:bg-amber-600'
-                      }`}
+                      } ${admin?.accessSidebar.includes("Dashboard'View'") ? 'opacity-60 cursor-not-allowed' : ''}`}
                     >
                       <option value="Pending">Pending</option>
                       <option value="Wrong">Wrong</option>
