@@ -103,7 +103,7 @@ export function BranchReport({ users }: BranchReportProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4">
             <TrendingUp size={20} />
@@ -120,6 +120,33 @@ export function BranchReport({ users }: BranchReportProps) {
           <p className="text-sm text-slate-500 font-medium">Total Teachers</p>
           <p className="text-2xl font-bold text-slate-900">
             {teacherList.length}
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-4">
+            <BarChart3 size={20} />
+          </div>
+          <p className="text-sm text-slate-500 font-medium">Total BV</p>
+          <p className="text-2xl font-bold text-slate-900">
+            {filteredUsers.reduce((acc, u) => acc + (u.bvCount || 0), 0)}
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="w-10 h-10 bg-teal-100 text-teal-600 rounded-xl flex items-center justify-center mb-4">
+            <BarChart3 size={20} />
+          </div>
+          <p className="text-sm text-slate-500 font-medium">Total EV</p>
+          <p className="text-2xl font-bold text-slate-900">
+            {filteredUsers.reduce((acc, u) => acc + (u.evCount || 0), 0)}
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4">
+            <BarChart3 size={20} />
+          </div>
+          <p className="text-sm text-slate-500 font-medium">Total BV + Total EV</p>
+          <p className="text-2xl font-bold text-slate-900">
+            {filteredUsers.reduce((acc, u) => acc + (u.bvCount || 0), 0) + filteredUsers.reduce((acc, u) => acc + (u.evCount || 0), 0)}
           </p>
         </div>
       </div>
