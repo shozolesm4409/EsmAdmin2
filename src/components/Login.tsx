@@ -29,7 +29,7 @@ export function Login({ onLogin }: LoginProps) {
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
         <div className="p-8 bg-blue-600 text-white text-center">
           <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 overflow-hidden">
-            <img src="https://online.udvash-unmesh.com/Content/UmsTheme/assets/img/udvash-unmesh.png" alt="Logo" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+            <img src="https://play-lh.googleusercontent.com/IiCTqE_rB6y1nQlZ-AJIQA0_vyX2V0bjp0KyeSg0X12OVCE6odidw_yFf-YyYjUY0cye" alt="Logo" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
           </div>
           <h1 className="text-2xl font-bold">Admin Login</h1>
           <p className="text-blue-100 mt-2">Access your dashboard securely</p>

@@ -16,7 +16,7 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard' },
   { icon: BarChart3, label: 'Reports', id: 'reports' },
   { icon: FileSpreadsheet, label: 'MarkSheet', id: 'marksheet' },
-  { icon: Wallet, label: 'PaymentSheet', id: 'paymentsheet' },
+  { icon: Wallet, label: 'Payment Tracking', id: 'paymentsheet' },
   { icon: Users, label: 'Users', id: 'users' },
   { icon: UserCircle, label: 'Profile', id: 'profile' },
   { icon: Settings, label: 'Branche&Examiner', id: 'settings' },
@@ -51,9 +51,9 @@ export function Sidebar({ isOpen, setIsOpen, currentView, onViewChange, userAcce
         <div className="flex items-center justify-between p-3 border-b border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center overflow-hidden">
-              <img src="https://online.udvash-unmesh.com/Content/UmsTheme/assets/img/udvash-unmesh.png" alt="Logo" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
+              <img src="https://play-lh.googleusercontent.com/IiCTqE_rB6y1nQlZ-AJIQA0_vyX2V0bjp0KyeSg0X12OVCE6odidw_yFf-YyYjUY0cye" alt="Logo" className="w-full h-full object-contain p-1" referrerPolicy="no-referrer" />
             </div>
-            <span className="font-bold text-xl tracking-tight">EsmAdmin</span>
+            <span className="font-bold text-lg tracking-tight">Mark & Payment</span>
           </div>
           <button onClick={() => setIsOpen(false)} className="lg:hidden text-slate-400 hover:text-white">
             <X size={24} />

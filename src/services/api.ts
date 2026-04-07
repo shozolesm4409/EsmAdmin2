@@ -71,7 +71,10 @@ export const apiService = {
       throw new Error(data.message || 'Login failed');
     } catch (error: any) {
       console.error('Login Error:', error);
-      throw new Error(error.message || 'Network Error. Please check your script deployment.');
+      const isFetchError = error.message === 'Failed to fetch';
+      throw new Error(isFetchError 
+        ? 'Network Error: Google Script unreachable. Please ensure your Script is deployed as a Web App with "Anyone" access and your internet is connected.' 
+        : (error.message || 'Network Error'));
     }
   },
 
@@ -134,7 +137,10 @@ export const apiService = {
       this.clearCache('users');
     } catch (error: any) {
       console.error('Save Error:', error);
-      throw new Error(error.message || 'Network Error');
+      const isFetchError = error.message === 'Failed to fetch';
+      throw new Error(isFetchError 
+        ? 'Network Error: Could not save data. Please check your Google Script deployment and connection.' 
+        : (error.message || 'Network Error'));
     }
   },
 
@@ -155,7 +161,10 @@ export const apiService = {
       this.clearCache('users');
     } catch (error: any) {
       console.error('Delete Error:', error);
-      throw new Error(error.message || 'Network Error');
+      const isFetchError = error.message === 'Failed to fetch';
+      throw new Error(isFetchError 
+        ? 'Network Error: Could not delete record. Please check your Google Script deployment and connection.' 
+        : (error.message || 'Network Error'));
     }
   },
 
@@ -205,7 +214,10 @@ export const apiService = {
       this.clearCache('adminUsers');
     } catch (error: any) {
       console.error('Add Admin User Error:', error);
-      throw new Error(error.message || 'Network Error');
+      const isFetchError = error.message === 'Failed to fetch';
+      throw new Error(isFetchError 
+        ? 'Network Error: Could not add admin user. Please check your Google Script deployment and connection.' 
+        : (error.message || 'Network Error'));
     }
   },
 
@@ -222,7 +234,10 @@ export const apiService = {
       this.clearCache('adminUsers');
     } catch (error: any) {
       console.error('Update Admin Access Error:', error);
-      throw new Error(error.message || 'Network Error');
+      const isFetchError = error.message === 'Failed to fetch';
+      throw new Error(isFetchError 
+        ? 'Network Error: Could not update access. Please check your Google Script deployment and connection.' 
+        : (error.message || 'Network Error'));
     }
   },
 
@@ -259,6 +274,38 @@ export const apiService = {
     } catch (error: any) {
       console.error('Update Admin Status Error:', error);
       throw new Error(error.message || 'Network Error');
+    }
+  },
+
+  async deleteAdminUser(rowId: number): Promise<void> {
+    if (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_SCRIPT_ID')) {
+      if (cache.adminUsers) {
+        cache.adminUsers = cache.adminUsers.filter(u => u.rowId !== rowId);
+      }
+      return new Promise((resolve) => setTimeout(resolve, 500));
+    }
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'deleteAdminUser', rowId }),
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+      });
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Invalid JSON response on deleteAdminUser:', text);
+        throw new Error('Server returned invalid response. The action "deleteAdminUser" might not be implemented in your Google Script.');
+      }
+      if (data.status !== 'success') throw new Error(data.message || 'Failed to delete admin user');
+      this.clearCache('adminUsers');
+    } catch (error: any) {
+      console.error('Delete Admin User Error:', error);
+      const isFetchError = error.message === 'Failed to fetch';
+      throw new Error(isFetchError 
+        ? 'Network Error: Could not delete admin user. This usually happens if the "deleteAdminUser" action is not implemented in your Google Script or if there is a connection issue.' 
+        : (error.message || 'Network Error'));
     }
   },
 

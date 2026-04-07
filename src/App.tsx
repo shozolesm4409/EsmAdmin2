@@ -45,6 +45,7 @@ export default function App() {
   const [viewingUser, setViewingUser] = useState<User | null>(null);
   const [viewingAdminUser, setViewingAdminUser] = useState<AdminUserRecord | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
+  const [deletingAdminUserId, setDeletingAdminUserId] = useState<number | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<string>('');
 
   // Admin User Form State
@@ -157,6 +158,18 @@ export default function App() {
       fetchData();
     } catch (err) {
       showNotification('error', 'Failed to delete record');
+    }
+  };
+
+  const handleDeleteAdminUser = async () => {
+    if (!deletingAdminUserId) return;
+    try {
+      await apiService.deleteAdminUser(deletingAdminUserId);
+      showNotification('success', 'Admin user deleted successfully');
+      setDeletingAdminUserId(null);
+      fetchData();
+    } catch (err: any) {
+      showNotification('error', err.message || 'Failed to delete admin user');
     }
   };
 
@@ -292,7 +305,10 @@ export default function App() {
           userRole={admin?.role || 'User'} 
           onViewChange={handleViewChange}
           onLogout={handleLogout}
-          pendingCount={users.reduce((acc, user) => acc + (user.extraData?.filter(m => m.status === 'Pending').length || 0), 0)}
+          pendingCount={
+            (users.reduce((acc, user) => acc + (user.extraData?.filter(m => m.status === 'Pending').length || 0), 0)) +
+            (admin?.accessSidebar.toLowerCase().includes('paymentsheet') || admin?.accessSidebar.toLowerCase().includes('payment tracking') ? users.filter(u => u.paymentStatus === 'Pending').length : 0)
+          }
         />
         
         <div className="p-4 lg:p-8 pt-4 lg:pt-4 flex-1">
@@ -365,6 +381,7 @@ export default function App() {
                 {currentView === 'notifications' && (
                   <Notifications 
                     users={users}
+                    adminAccess={admin.accessSidebar}
                     onViewDetails={(user) => {
                       setViewingUser(user);
                       setCurrentView('userDetails');
@@ -372,6 +389,9 @@ export default function App() {
                     onViewMarksheet={(subject) => {
                       setSelectedSubject(subject);
                       setCurrentView('marksheet');
+                    }}
+                    onViewPaymentSheet={() => {
+                      setCurrentView('paymentsheet');
                     }}
                     onBack={() => setCurrentView('dashboard')}
                   />
@@ -408,6 +428,7 @@ export default function App() {
                     onAdd={() => setIsAdminFormModalOpen(true)}
                     onToggleStatus={handleToggleAdminStatus}
                     onUpdateAccess={handleUpdateAdminAccess}
+                    onDelete={(id) => { setDeletingAdminUserId(id); setIsConfirmOpen(true); }}
                     onViewDetails={(u) => { setViewingAdminUser(u); setCurrentView('adminUserDetails'); }}
                   />
                 )}
@@ -507,7 +528,19 @@ export default function App() {
         </form>
       </Modal>
 
-      <ConfirmDialog isOpen={isConfirmOpen} onClose={() => { setIsConfirmOpen(false); setDeletingUserId(null); }} onConfirm={handleDeleteUser} title="Delete Record" message="Are you sure you want to delete this record? This action cannot be undone." confirmText="Delete" isDestructive />
+      <ConfirmDialog 
+        isOpen={isConfirmOpen} 
+        onClose={() => { 
+          setIsConfirmOpen(false); 
+          setDeletingUserId(null); 
+          setDeletingAdminUserId(null);
+        }} 
+        onConfirm={deletingAdminUserId ? handleDeleteAdminUser : handleDeleteUser} 
+        title="Delete Record" 
+        message="Are you sure you want to delete this record? This action cannot be undone." 
+        confirmText="Delete" 
+        isDestructive 
+      />
 
       <DetailsModal 
         isOpen={isDetailsOpen} 
