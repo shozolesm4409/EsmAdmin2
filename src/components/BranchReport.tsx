@@ -144,7 +144,7 @@ export function BranchReport({ users }: BranchReportProps) {
           <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4">
             <BarChart3 size={20} />
           </div>
-          <p className="text-sm text-slate-500 font-medium">Total BV + Total EV</p>
+          <p className="text-sm text-slate-500 font-medium">Total BV + EV</p>
           <p className="text-2xl font-bold text-slate-900">
             {filteredUsers.reduce((acc, u) => acc + (u.bvCount || 0), 0) + filteredUsers.reduce((acc, u) => acc + (u.evCount || 0), 0)}
           </p>
