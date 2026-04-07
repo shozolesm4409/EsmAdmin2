@@ -52,6 +52,7 @@ export default function App() {
 
   // Notification state
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [retryTimer, setRetryTimer] = useState<number | null>(null);
 
   const fetchData = async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -65,13 +66,28 @@ export default function App() {
         setAdminUsers(data);
       }
       setError(null);
+      setRetryTimer(null);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch data. Please check your API configuration.');
       showNotification('error', err.message || 'Failed to fetch data');
+      if (!silent) setRetryTimer(5);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (retryTimer !== null && retryTimer > 0) {
+      interval = setInterval(() => {
+        setRetryTimer(prev => (prev !== null ? prev - 1 : null));
+      }, 1000);
+    } else if (retryTimer === 0) {
+      setRetryTimer(null);
+      fetchData();
+    }
+    return () => clearInterval(interval);
+  }, [retryTimer]);
 
   useEffect(() => {
     if (admin) {
@@ -312,15 +328,21 @@ export default function App() {
               <div className="p-8 bg-red-50 border border-red-100 rounded-2xl text-center">
                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-red-900 mb-2">Something went wrong</h3>
-                <p className="text-red-700 mb-6">{error}</p>
+                <p className="text-red-700 mb-2">{error}</p>
+                {retryTimer !== null && (
+                  <p className="text-sm text-red-600 mb-6 font-medium">
+                    Retrying automatically in <span className="text-lg font-bold">{retryTimer}</span> seconds...
+                  </p>
+                )}
                 <button 
                   onClick={() => {
+                    setRetryTimer(null);
                     apiService.clearCache();
                     fetchData();
                   }} 
                   className="px-6 py-2 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors"
                 >
-                  Try Again
+                  Try Again Now
                 </button>
               </div>
             ) : (
