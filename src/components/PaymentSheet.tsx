@@ -149,7 +149,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
               <button
                 key={subject}
                 onClick={() => setActiveSubject(subject)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   activeSubject === subject
                     ? 'bg-emerald-600 text-white shadow-md shadow-emerald-100'
                     : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
@@ -165,7 +165,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
               <button
                 key={status}
                 onClick={() => setActiveStatus(status)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
                   activeStatus === status
                     ? status === 'Pending' ? 'bg-amber-500 text-white shadow-sm' : 'bg-emerald-500 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
