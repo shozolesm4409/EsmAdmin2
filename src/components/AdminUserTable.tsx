@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AdminUserRecord } from '../types';
-import { Search, Plus, Shield, ShieldOff, UserPlus, Settings, Eye } from 'lucide-react';
+import { Search, Plus, Shield, ShieldOff, UserPlus, Settings, Eye, Trash2 } from 'lucide-react';
 import { AccessConfigurator } from './AccessConfigurator';
 
 interface AdminUserTableProps {
@@ -9,9 +9,10 @@ interface AdminUserTableProps {
   onToggleStatus: (rowId: number, currentStatus: 'Active' | 'Blocked') => void;
   onUpdateAccess: (rowId: number, role: string, access: string, userName: string) => void;
   onViewDetails: (user: AdminUserRecord) => void;
+  onDelete: (rowId: number) => void;
 }
 
-export function AdminUserTable({ users, onAdd, onToggleStatus, onUpdateAccess, onViewDetails }: AdminUserTableProps) {
+export function AdminUserTable({ users, onAdd, onToggleStatus, onUpdateAccess, onViewDetails, onDelete }: AdminUserTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [editingAccess, setEditingAccess] = useState<AdminUserRecord | null>(null);
   const [newRole, setNewRole] = useState('');
@@ -115,12 +116,19 @@ export function AdminUserTable({ users, onAdd, onToggleStatus, onUpdateAccess, o
                       onClick={() => onToggleStatus(user.rowId, user.status)}
                       className={`p-1 rounded-lg transition-colors cursor-pointer ${
                         user.status === 'Active' 
-                          ? 'text-red-500 hover:bg-red-50' 
+                          ? 'text-amber-500 hover:bg-amber-50' 
                           : 'text-emerald-500 hover:bg-emerald-50'
                       }`}
                       title={user.status === 'Active' ? 'Block User' : 'Unblock User'}
                     >
                       {user.status === 'Active' ? <ShieldOff size={16} /> : <Shield size={16} />}
+                    </button>
+                    <button 
+                      onClick={() => onDelete(user.rowId)}
+                      className="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      title="Delete User"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </td>
