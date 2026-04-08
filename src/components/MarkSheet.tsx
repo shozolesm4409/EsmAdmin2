@@ -168,7 +168,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
   };
 
   const statusCounts = React.useMemo(() => {
-    const counts = { Pending: 0, Updated: 0, Wrong: 0 };
+    const counts = { Pending: 0, Updated: 0, Wrong: 0, 'Not Admitted': 0 };
     users
       .filter(u => u.subject === activeSubject)
       .flatMap(u => (u.extraData || []))
@@ -176,6 +176,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
         if (mark.status === 'Pending') counts.Pending++;
         else if (mark.status === 'Updated') counts.Updated++;
         else if (mark.status === 'Wrong') counts.Wrong++;
+        else if (mark.status === 'Not Admitted') counts['Not Admitted']++;
       });
     return counts;
   }, [users, activeSubject]);
@@ -272,7 +273,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
           </div>
 
           <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-fit">
-            {['Pending', 'Updated', 'Wrong'].map(status => (
+            {['Pending', 'Updated', 'Wrong', 'Not Admitted'].map(status => (
               <button
                 key={status}
                 onClick={() => setActiveStatus(status)}
@@ -280,7 +281,8 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
                   activeStatus === status
                     ? status === 'Pending' ? 'bg-amber-500 text-white shadow-sm' :
                       status === 'Updated' ? 'bg-emerald-500 text-white shadow-sm' :
-                      'bg-rose-500 text-white shadow-sm'
+                      status === 'Wrong' ? 'bg-rose-500 text-white shadow-sm' :
+                      'bg-slate-600 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
                 }`}
               >
@@ -303,7 +305,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
               <span className="text-xs text-blue-600">Update status to:</span>
             </div>
             <div className="flex items-center gap-2">
-              {['Pending', 'Updated', 'Wrong'].map(status => (
+              {['Pending', 'Updated', 'Wrong', 'Not Admitted'].map(status => (
                 <button
                   key={status}
                   onClick={() => handleBulkStatusUpdate(status)}
@@ -311,7 +313,8 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold text-white transition-all shadow-sm flex items-center gap-2 cursor-pointer ${
                     status === 'Pending' ? 'bg-amber-500 hover:bg-amber-600' :
                     status === 'Updated' ? 'bg-emerald-500 hover:bg-emerald-600' :
-                    'bg-rose-500 hover:bg-rose-600'
+                    status === 'Wrong' ? 'bg-rose-500 hover:bg-rose-600' :
+                    'bg-slate-600 hover:bg-slate-700'
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isBulkUpdating ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
@@ -372,12 +375,14 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
                           waitingRolls.has(item.roll?.toString() || '') ? 'bg-indigo-500 text-white' :
                           item.status === 'Updated' ? 'bg-emerald-500 text-white hover:bg-emerald-600' :
                           item.status === 'Wrong' ? 'bg-rose-500 text-white hover:bg-rose-600' :
+                          item.status === 'Not Admitted' ? 'bg-slate-600 text-white hover:bg-slate-700' :
                           'bg-amber-500 text-white hover:bg-amber-600'
                         }`}
                       >
                         <option value="Pending">Pending</option>
                         <option value="Updated">Updated</option>
                         <option value="Wrong">Wrong</option>
+                        <option value="Not Admitted">Not Admitted</option>
                         {waitingRolls.has(item.roll?.toString() || '') && (
                           <option value="Waiting">Waiting</option>
                         )}
