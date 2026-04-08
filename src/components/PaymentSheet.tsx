@@ -81,7 +81,8 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
           bvCount: Number(current.bvCount || 0),
           evCount: Number(current.evCount || 0),
           rowIds: [current.rowId],
-          status: currentStatus
+          status: currentStatus,
+          entryDate: current.entryDate
         });
       }
       return acc;
@@ -186,6 +187,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
+                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Date</th>
                 <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Teacher</th>
                 <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">TPIN</th>
                 <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Branch</th>
@@ -201,6 +203,9 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
                     const branchKey = `${group.key}-${branch.branchName}`;
                     return (
                       <tr key={branchKey} className="hover:bg-slate-50/50 transition-colors border-b border-slate-50 last:border-b-0">
+                        <td className="px-6 py-1 text-sm text-slate-500">
+                          {branch.entryDate ? branch.entryDate.split('T')[0] : ''}
+                        </td>
                         {bIdx === 0 && (
                           <>
                             <td className="px-6 py-1 text-sm text-slate-600 border-r border-slate-100" rowSpan={group.branches.length}>
@@ -241,7 +246,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
               ))}
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500 italic">
                     No records found for this subject.
                   </td>
                 </tr>
