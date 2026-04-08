@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User } from '../types';
-import { BarChart3, Building2, TrendingUp, Users as UsersIcon, GraduationCap, Eye } from 'lucide-react';
+import { BarChart3, Building2, TrendingUp, Users as UsersIcon, GraduationCap, Eye, BookOpen } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { DetailsPopup } from './DetailsPopup';
 
@@ -176,6 +176,39 @@ export function BranchReport({ users }: BranchReportProps) {
     if (user.teacherName) acc[subject].teachers.add(user.teacherName);
     return acc;
   }, {} as Record<string, any>)).sort((a, b) => b.totalBV - a.totalBV);
+
+  // Group data for Matrix Table
+  const uniqueSubjects = Array.from(new Set(users.map(u => u.subject || 'Unknown'))).sort();
+  const matrixData: Record<string, Record<string, {bv: number, ev: number}>> = {};
+  const matrixSubjectTotals: Record<string, {bv: number, ev: number}> = {};
+  
+  uniqueSubjects.forEach(sub => {
+    matrixSubjectTotals[sub] = {bv: 0, ev: 0};
+  });
+
+  users.forEach(user => {
+    const counts = getEffectiveCounts(user);
+    if (counts.records === 0 && activeTab !== 'All') return;
+
+    const branch = user.branchName || 'Unknown';
+    const subject = user.subject || 'Unknown';
+
+    if (!matrixData[branch]) {
+      matrixData[branch] = {};
+      uniqueSubjects.forEach(sub => {
+        matrixData[branch][sub] = {bv: 0, ev: 0};
+      });
+    }
+
+    matrixData[branch][subject].bv += counts.bv;
+    matrixData[branch][subject].ev += counts.ev;
+    
+    matrixSubjectTotals[subject].bv += counts.bv;
+    matrixSubjectTotals[subject].ev += counts.ev;
+  });
+
+  const matrixBranches = Object.keys(matrixData).sort();
+  const totalColumns = 2 + uniqueSubjects.reduce((acc, sub) => acc + (matrixSubjectTotals[sub].bv > 0 && matrixSubjectTotals[sub].ev > 0 ? 3 : 1), 0);
 
   const totals = users.reduce((acc, u) => {
     const counts = getEffectiveCounts(u);
@@ -490,6 +523,113 @@ export function BranchReport({ users }: BranchReportProps) {
             </table>
           </div>
         </div>
+        {/* Subject & Branch Wise Table (Matrix) */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col xl:col-span-2">
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <BookOpen size={18} className="text-indigo-600" />
+              Subject & Branch Wise Report
+            </h3>
+          </div>
+          <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+            <table className="w-full text-left border-collapse border-y border-slate-300">
+              <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">
+                <tr>
+                  <th rowSpan={2} className="p-2 text-xs font-bold text-slate-700 uppercase tracking-wider text-center border border-slate-300 w-12 bg-slate-100">SL</th>
+                  <th rowSpan={2} className="p-2 text-xs font-bold text-slate-700 uppercase tracking-wider border border-slate-300 bg-slate-100 min-w-[120px]">Branch</th>
+                  {uniqueSubjects.map(sub => {
+                    const totals = matrixSubjectTotals[sub];
+                    const hasBoth = totals.bv > 0 && totals.ev > 0;
+                    return (
+                      <th key={sub} colSpan={hasBoth ? 3 : 1} className="p-2 text-xs font-bold text-slate-700 uppercase tracking-wider text-center border border-slate-300 bg-slate-100">
+                        {sub}
+                      </th>
+                    );
+                  })}
+                </tr>
+                <tr>
+                  {uniqueSubjects.map(sub => {
+                    const totals = matrixSubjectTotals[sub];
+                    const hasBoth = totals.bv > 0 && totals.ev > 0;
+                    if (hasBoth) {
+                      return (
+                        <React.Fragment key={`${sub}-headers`}>
+                          <th className="p-2 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total BV</th>
+                          <th className="p-2 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total EV</th>
+                          <th className="p-2 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total</th>
+                        </React.Fragment>
+                      );
+                    } else {
+                      return (
+                        <th key={`${sub}-headers`} className="p-2 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total</th>
+                      );
+                    }
+                  })}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {matrixBranches.map((branch, idx) => (
+                  <tr key={branch} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="p-2 text-center text-sm text-slate-700 border border-slate-300">{idx + 1}</td>
+                    <td className="p-2 text-sm font-semibold text-slate-900 border border-slate-300">{branch}</td>
+                    {uniqueSubjects.map(sub => {
+                      const totals = matrixSubjectTotals[sub];
+                      const hasBoth = totals.bv > 0 && totals.ev > 0;
+                      const data = matrixData[branch][sub];
+                      const total = data.bv + data.ev;
+                      
+                      if (hasBoth) {
+                        return (
+                          <React.Fragment key={`${branch}-${sub}`}>
+                            <td className="p-2 text-center text-sm text-slate-700 border border-slate-300">{data.bv || ''}</td>
+                            <td className="p-2 text-center text-sm text-slate-700 border border-slate-300">{data.ev || ''}</td>
+                            <td className="p-2 text-center text-sm font-bold text-slate-900 border border-slate-300">{total || ''}</td>
+                          </React.Fragment>
+                        );
+                      } else {
+                        return (
+                          <td key={`${branch}-${sub}`} className="p-2 text-center text-sm font-bold text-slate-900 border border-slate-300">{total || ''}</td>
+                        );
+                      }
+                    })}
+                  </tr>
+                ))}
+                {matrixBranches.length === 0 && (
+                  <tr>
+                    <td colSpan={totalColumns} className="p-4 text-center text-slate-500 italic border border-slate-300">No data available.</td>
+                  </tr>
+                )}
+              </tbody>
+              {matrixBranches.length > 0 && (
+                <tfoot className="bg-slate-100 font-bold sticky bottom-0 z-20 shadow-sm">
+                  <tr>
+                    <td colSpan={2} className="p-2 text-center text-sm text-slate-900 border border-slate-300 uppercase">Total</td>
+                    {uniqueSubjects.map(sub => {
+                      const data = matrixSubjectTotals[sub];
+                      const hasBoth = data.bv > 0 && data.ev > 0;
+                      const total = data.bv + data.ev;
+                      
+                      if (hasBoth) {
+                        return (
+                          <React.Fragment key={`total-${sub}`}>
+                            <td className="p-2 text-center text-sm text-blue-700 border border-slate-300">{data.bv || 0}</td>
+                            <td className="p-2 text-center text-sm text-emerald-700 border border-slate-300">{data.ev || 0}</td>
+                            <td className="p-2 text-center text-sm text-purple-700 border border-slate-300">{total || 0}</td>
+                          </React.Fragment>
+                        );
+                      } else {
+                        return (
+                          <td key={`total-${sub}`} className="p-2 text-center text-sm text-purple-700 border border-slate-300">{total || 0}</td>
+                        );
+                      }
+                    })}
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </div>
+
       </div>
       <DetailsPopup 
         isOpen={!!selectedDetails} 
