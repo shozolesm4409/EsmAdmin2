@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { User } from '../types';
-import { BarChart3, Building2, TrendingUp, Users as UsersIcon, GraduationCap, Eye, BookOpen } from 'lucide-react';
+import { BarChart3, Building2, TrendingUp, Users as UsersIcon, GraduationCap, Eye, BookOpen, Download } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { DetailsPopup } from './DetailsPopup';
+import * as XLSX from 'xlsx';
 
 interface BranchReportProps {
   users: User[];
@@ -216,6 +217,94 @@ export function BranchReport({ users }: BranchReportProps) {
     acc.ev += counts.ev;
     return acc;
   }, { bv: 0, ev: 0 });
+
+  const handleExportMatrix = () => {
+    const wsData: any[][] = [];
+    
+    // Header Row 1
+    const header1 = ['SL', 'Branch'];
+    uniqueSubjects.forEach(sub => {
+      const totals = matrixSubjectTotals[sub];
+      const hasBoth = totals.bv > 0 && totals.ev > 0;
+      header1.push(sub);
+      if (hasBoth) {
+        header1.push('', ''); // Empty cells for merged columns
+      }
+    });
+    wsData.push(header1);
+
+    // Header Row 2
+    const header2 = ['', ''];
+    uniqueSubjects.forEach(sub => {
+      const totals = matrixSubjectTotals[sub];
+      const hasBoth = totals.bv > 0 && totals.ev > 0;
+      if (hasBoth) {
+        header2.push('Total BV', 'Total EV', 'Total');
+      } else {
+        header2.push('Total');
+      }
+    });
+    wsData.push(header2);
+
+    // Data Rows
+    matrixBranches.forEach((branch, idx) => {
+      const row: any[] = [idx + 1, branch];
+      uniqueSubjects.forEach(sub => {
+        const totals = matrixSubjectTotals[sub];
+        const hasBoth = totals.bv > 0 && totals.ev > 0;
+        const data = matrixData[branch][sub];
+        const total = data.bv + data.ev;
+        
+        if (hasBoth) {
+          row.push(data.bv || '', data.ev || '', total || '');
+        } else {
+          row.push(total || '');
+        }
+      });
+      wsData.push(row);
+    });
+
+    // Footer Row
+    const footerRow: any[] = ['Total', ''];
+    uniqueSubjects.forEach(sub => {
+      const totals = matrixSubjectTotals[sub];
+      const hasBoth = totals.bv > 0 && totals.ev > 0;
+      const total = totals.bv + totals.ev;
+      
+      if (hasBoth) {
+        footerRow.push(totals.bv || 0, totals.ev || 0, total || 0);
+      } else {
+        footerRow.push(total || 0);
+      }
+    });
+    wsData.push(footerRow);
+
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Merge cells for Header Row 1
+    const merges: XLSX.Range[] = [];
+    merges.push({ s: { r: 0, c: 0 }, e: { r: 1, c: 0 } }); // SL
+    merges.push({ s: { r: 0, c: 1 }, e: { r: 1, c: 1 } }); // Branch
+    merges.push({ s: { r: wsData.length - 1, c: 0 }, e: { r: wsData.length - 1, c: 1 } }); // Footer Total
+
+    let colIdx = 2;
+    uniqueSubjects.forEach(sub => {
+      const totals = matrixSubjectTotals[sub];
+      const hasBoth = totals.bv > 0 && totals.ev > 0;
+      if (hasBoth) {
+        merges.push({ s: { r: 0, c: colIdx }, e: { r: 0, c: colIdx + 2 } });
+        colIdx += 3;
+      } else {
+        merges.push({ s: { r: 0, c: colIdx }, e: { r: 0, c: colIdx } });
+        colIdx += 1;
+      }
+    });
+    ws['!merges'] = merges;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Subject_Branch_Report');
+    XLSX.writeFile(wb, 'Subject_Branch_Report.xlsx');
+  };
 
   return (
     <div className="space-y-6">
@@ -525,11 +614,18 @@ export function BranchReport({ users }: BranchReportProps) {
         </div>
         {/* Subject & Branch Wise Table (Matrix) */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col xl:col-span-2">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
               <BookOpen size={18} className="text-indigo-600" />
               Subject & Branch Wise Report
             </h3>
+            <button
+              onClick={handleExportMatrix}
+              className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
+            >
+              <Download size={14} />
+              Export Excel
+            </button>
           </div>
           <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
             <table className="w-full text-left border-collapse border-y border-slate-300">
