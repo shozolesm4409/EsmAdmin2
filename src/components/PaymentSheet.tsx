@@ -187,13 +187,13 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
           <table className="w-full text-left border-collapse border border-slate-300">
             <thead>
               <tr className="bg-slate-100 sticky top-0 z-10">
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Date</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Teacher</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">TPIN</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Branch</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">BV Count</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">EV Count</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase text-right border border-slate-300">Action</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">Date</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">Teacher</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">TPIN</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">Branch</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">BV Count</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">EV Count</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase text-right border border-slate-300">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
