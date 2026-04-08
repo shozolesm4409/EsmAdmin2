@@ -224,7 +224,7 @@ export function BranchReport({ users }: BranchReportProps) {
           <h2 className="text-2xl font-bold text-slate-900">Branch & Teacher Report</h2>
           <p className="text-slate-500 text-sm">Summary of performance and activity across all branches and teachers.</p>
         </div>
-        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+        <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
           <button
             onClick={() => setActiveTab('All')}
             className={cn(
@@ -316,7 +316,7 @@ export function BranchReport({ users }: BranchReportProps) {
         {/* Subject Wise Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col xl:col-span-2">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
               <BarChart3 size={18} className="text-purple-600" />
               Subject Wise Report
             </h3>
@@ -325,19 +325,19 @@ export function BranchReport({ users }: BranchReportProps) {
             <table className="w-full text-left border-collapse relative">
               <thead className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-sm">
                 <tr>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Subject Name</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Records</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Branches</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Teachers</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total BV</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total EV</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Subject Name</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Records</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Branches</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Teachers</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total BV</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total EV</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {subjectData.map((subject: any) => (
                   <tr key={subject.subject} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-2">
+                    <td className="p-1.5">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center shrink-0">
                           <BarChart3 size={16} />
@@ -345,24 +345,24 @@ export function BranchReport({ users }: BranchReportProps) {
                         <p className="text-sm font-semibold text-slate-900">{subject.subject}</p>
                       </div>
                     </td>
-                    <td className="p-2 text-center">
+                    <td className="p-1.5 text-center">
                       <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">
                         {subject.recordCount}
                       </span>
                     </td>
-                    <td className="p-2 text-center text-sm text-slate-600">
+                    <td className="p-1.5 text-center text-sm text-slate-600">
                       {subject.branches.size}
                     </td>
-                    <td className="p-2 text-center text-sm text-slate-600">
+                    <td className="p-1.5 text-center text-sm text-slate-600">
                       {subject.teachers.size}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="p-1.5 text-right">
                       <span className="text-sm font-bold text-blue-600">{subject.totalBV}</span>
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="p-1.5 text-right">
                       <span className="text-sm font-bold text-emerald-600">{subject.totalEV}</span>
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="p-1.5 text-right">
                       <span className="text-sm font-bold text-purple-600">{subject.totalBV + subject.totalEV}</span>
                     </td>
                   </tr>
@@ -375,7 +375,7 @@ export function BranchReport({ users }: BranchReportProps) {
         {/* Branch Wise Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col xl:col-span-2">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
               <Building2 size={18} className="text-blue-600" />
               Branch Wise Report
             </h3>
@@ -384,20 +384,20 @@ export function BranchReport({ users }: BranchReportProps) {
             <table className="w-full text-left border-collapse relative">
               <thead className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-sm">
                 <tr>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Branch Details</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Records</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Subjects</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Teachers</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total BV</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total EV</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Branch Details</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Records</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Subjects</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Teachers</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total BV</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total EV</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {branchList.map((branch: any) => (
                   <tr key={branch.branchId} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-2">
+                    <td className="p-1.5">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center shrink-0">
                           <Building2 size={16} />
@@ -408,27 +408,27 @@ export function BranchReport({ users }: BranchReportProps) {
                         </div>
                       </div>
                     </td>
-                    <td className="p-2 text-center">
+                    <td className="p-1.5 text-center">
                       <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">
                         {branch.recordCount}
                       </span>
                     </td>
-                    <td className="p-2 text-center text-sm text-slate-600">
+                    <td className="p-1.5 text-center text-sm text-slate-600">
                       {branch.subjects.size}
                     </td>
-                    <td className="p-2 text-center text-sm text-slate-600">
+                    <td className="p-1.5 text-center text-sm text-slate-600">
                       {branch.teachers.size}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="p-1.5 text-right">
                       <span className="text-sm font-bold text-blue-600">{branch.totalBV}</span>
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="p-1.5 text-right">
                       <span className="text-sm font-bold text-emerald-600">{branch.totalEV}</span>
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="p-1.5 text-right">
                       <span className="text-sm font-bold text-purple-600">{branch.totalBV + branch.totalEV}</span>
                     </td>
-                    <td className="p-2 text-center">
+                    <td className="p-1.5 text-center">
                       <button 
                         onClick={() => setSelectedDetails({ title: `Branch: ${branch.branchName}`, data: { ...branch, subjects: Array.from(branch.subjects), teachers: Array.from(branch.teachers), users: branch.users } })}
                         className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
@@ -440,7 +440,7 @@ export function BranchReport({ users }: BranchReportProps) {
                 ))}
                 {branchList.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-2 py-12 text-center text-slate-500 italic">No branch data available.</td>
+                    <td colSpan={8} className="p-1.5 py-12 text-center text-slate-500 italic">No branch data available.</td>
                   </tr>
                 )}
               </tbody>
@@ -451,7 +451,7 @@ export function BranchReport({ users }: BranchReportProps) {
         {/* Teachers Wise Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col xl:col-span-2">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
               <GraduationCap size={18} className="text-emerald-600" />
               Teachers Wise Report
             </h3>
@@ -460,20 +460,20 @@ export function BranchReport({ users }: BranchReportProps) {
             <table className="w-full text-left border-collapse relative">
               <thead className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-sm">
                 <tr>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Teacher Details</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Records</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Subjects</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Branches</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total BV</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total EV</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total</th>
-                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Teacher Details</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Records</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Subjects</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Branches</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total BV</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total EV</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total</th>
+                  <th className="p-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {teacherList.map((teacher: any) => (
                   <tr key={`${teacher.teacherName}-${teacher.teacherTPIN}`} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-2">
+                    <td className="p-1.5">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center shrink-0">
                           <GraduationCap size={16} />
@@ -484,27 +484,27 @@ export function BranchReport({ users }: BranchReportProps) {
                         </div>
                       </div>
                     </td>
-                    <td className="p-2 text-center">
+                    <td className="p-1.5 text-center">
                       <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">
                         {teacher.recordCount}
                       </span>
                     </td>
-                    <td className="p-2 text-center text-sm text-slate-600">
+                    <td className="p-1.5 text-center text-sm text-slate-600">
                       {teacher.subjects.size}
                     </td>
-                    <td className="p-2 text-center text-sm text-slate-600">
+                    <td className="p-1.5 text-center text-sm text-slate-600">
                       {teacher.branches.size}
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="p-1.5 text-right">
                       <span className="text-sm font-bold text-blue-600">{teacher.totalBV}</span>
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="p-1.5 text-right">
                       <span className="text-sm font-bold text-emerald-600">{teacher.totalEV}</span>
                     </td>
-                    <td className="p-2 text-right">
+                    <td className="p-1.5 text-right">
                       <span className="text-sm font-bold text-purple-600">{teacher.totalBV + teacher.totalEV}</span>
                     </td>
-                    <td className="p-2 text-center">
+                    <td className="p-1.5 text-center">
                       <button 
                         onClick={() => setSelectedDetails({ title: `Teacher: ${teacher.teacherName}`, data: { ...teacher, subjects: Array.from(teacher.subjects), branches: Array.from(teacher.branches), users: teacher.users } })}
                         className="p-1 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
@@ -516,7 +516,7 @@ export function BranchReport({ users }: BranchReportProps) {
                 ))}
                 {teacherList.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-2 py-12 text-center text-slate-500 italic">No teacher data available.</td>
+                    <td colSpan={8} className="p-1.5 py-12 text-center text-slate-500 italic">No teacher data available.</td>
                   </tr>
                 )}
               </tbody>
@@ -526,7 +526,7 @@ export function BranchReport({ users }: BranchReportProps) {
         {/* Subject & Branch Wise Table (Matrix) */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col xl:col-span-2">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-1.5">
               <BookOpen size={18} className="text-indigo-600" />
               Subject & Branch Wise Report
             </h3>
@@ -535,13 +535,13 @@ export function BranchReport({ users }: BranchReportProps) {
             <table className="w-full text-left border-collapse border-y border-slate-300">
               <thead className="sticky top-0 z-20 bg-slate-100 shadow-sm">
                 <tr>
-                  <th rowSpan={2} className="p-2 text-xs font-bold text-slate-700 uppercase tracking-wider text-center border border-slate-300 w-12 bg-slate-100">SL</th>
-                  <th rowSpan={2} className="p-2 text-xs font-bold text-slate-700 uppercase tracking-wider border border-slate-300 bg-slate-100 min-w-[120px]">Branch</th>
+                  <th rowSpan={2} className="p-1.5 text-xs font-bold text-slate-700 uppercase tracking-wider text-center border border-slate-300 w-12 bg-slate-100">SL</th>
+                  <th rowSpan={2} className="p-1.5 text-xs font-bold text-slate-700 uppercase tracking-wider border border-slate-300 bg-slate-100 min-w-[120px]">Branch</th>
                   {uniqueSubjects.map(sub => {
                     const totals = matrixSubjectTotals[sub];
                     const hasBoth = totals.bv > 0 && totals.ev > 0;
                     return (
-                      <th key={sub} colSpan={hasBoth ? 3 : 1} className="p-2 text-xs font-bold text-slate-700 uppercase tracking-wider text-center border border-slate-300 bg-slate-100">
+                      <th key={sub} colSpan={hasBoth ? 3 : 1} className="p-1.5 text-xs font-bold text-slate-700 uppercase tracking-wider text-center border border-slate-300 bg-slate-100">
                         {sub}
                       </th>
                     );
@@ -554,14 +554,14 @@ export function BranchReport({ users }: BranchReportProps) {
                     if (hasBoth) {
                       return (
                         <React.Fragment key={`${sub}-headers`}>
-                          <th className="p-2 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total BV</th>
-                          <th className="p-2 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total EV</th>
-                          <th className="p-2 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total</th>
+                          <th className="p-1.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total BV</th>
+                          <th className="p-1.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total EV</th>
+                          <th className="p-1.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total</th>
                         </React.Fragment>
                       );
                     } else {
                       return (
-                        <th key={`${sub}-headers`} className="p-2 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total</th>
+                        <th key={`${sub}-headers`} className="p-1.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center border border-slate-300 bg-slate-50">Total</th>
                       );
                     }
                   })}
@@ -570,8 +570,8 @@ export function BranchReport({ users }: BranchReportProps) {
               <tbody className="divide-y divide-slate-200">
                 {matrixBranches.map((branch, idx) => (
                   <tr key={branch} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-2 text-center text-sm text-slate-700 border border-slate-300">{idx + 1}</td>
-                    <td className="p-2 text-sm font-semibold text-slate-900 border border-slate-300">{branch}</td>
+                    <td className="p-1.5 text-center text-sm text-slate-700 border border-slate-300">{idx + 1}</td>
+                    <td className="p-1.5 text-sm font-semibold text-slate-900 border border-slate-300">{branch}</td>
                     {uniqueSubjects.map(sub => {
                       const totals = matrixSubjectTotals[sub];
                       const hasBoth = totals.bv > 0 && totals.ev > 0;
@@ -581,14 +581,14 @@ export function BranchReport({ users }: BranchReportProps) {
                       if (hasBoth) {
                         return (
                           <React.Fragment key={`${branch}-${sub}`}>
-                            <td className="p-2 text-center text-sm text-slate-700 border border-slate-300">{data.bv || ''}</td>
-                            <td className="p-2 text-center text-sm text-slate-700 border border-slate-300">{data.ev || ''}</td>
-                            <td className="p-2 text-center text-sm font-bold text-slate-900 border border-slate-300">{total || ''}</td>
+                            <td className="p-1.5 text-center text-sm text-slate-700 border border-slate-300">{data.bv || ''}</td>
+                            <td className="p-1.5 text-center text-sm text-slate-700 border border-slate-300">{data.ev || ''}</td>
+                            <td className="p-1.5 text-center text-sm font-bold text-slate-900 border border-slate-300">{total || ''}</td>
                           </React.Fragment>
                         );
                       } else {
                         return (
-                          <td key={`${branch}-${sub}`} className="p-2 text-center text-sm font-bold text-slate-900 border border-slate-300">{total || ''}</td>
+                          <td key={`${branch}-${sub}`} className="p-1.5 text-center text-sm font-bold text-slate-900 border border-slate-300">{total || ''}</td>
                         );
                       }
                     })}
@@ -603,7 +603,7 @@ export function BranchReport({ users }: BranchReportProps) {
               {matrixBranches.length > 0 && (
                 <tfoot className="bg-slate-100 font-bold sticky bottom-0 z-20 shadow-sm">
                   <tr>
-                    <td colSpan={2} className="p-2 text-center text-sm text-slate-900 border border-slate-300 uppercase">Total</td>
+                    <td colSpan={2} className="p-1.5 text-center text-sm text-slate-900 border border-slate-300 uppercase">Total</td>
                     {uniqueSubjects.map(sub => {
                       const data = matrixSubjectTotals[sub];
                       const hasBoth = data.bv > 0 && data.ev > 0;
@@ -612,14 +612,14 @@ export function BranchReport({ users }: BranchReportProps) {
                       if (hasBoth) {
                         return (
                           <React.Fragment key={`total-${sub}`}>
-                            <td className="p-2 text-center text-sm text-blue-700 border border-slate-300">{data.bv || 0}</td>
-                            <td className="p-2 text-center text-sm text-emerald-700 border border-slate-300">{data.ev || 0}</td>
-                            <td className="p-2 text-center text-sm text-purple-700 border border-slate-300">{total || 0}</td>
+                            <td className="p-1.5 text-center text-sm text-blue-700 border border-slate-300">{data.bv || 0}</td>
+                            <td className="p-1.5 text-center text-sm text-emerald-700 border border-slate-300">{data.ev || 0}</td>
+                            <td className="p-1.5 text-center text-sm text-purple-700 border border-slate-300">{total || 0}</td>
                           </React.Fragment>
                         );
                       } else {
                         return (
-                          <td key={`total-${sub}`} className="p-2 text-center text-sm text-purple-700 border border-slate-300">{total || 0}</td>
+                          <td key={`total-${sub}`} className="p-1.5 text-center text-sm text-purple-700 border border-slate-300">{total || 0}</td>
                         );
                       }
                     })}
