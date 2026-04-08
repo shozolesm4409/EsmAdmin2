@@ -322,11 +322,11 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
           </div>
         )}
 
-        <div className="overflow-x-auto border border-slate-100 rounded-xl max-h-[400px] overflow-y-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+          <table className="w-full text-left border-collapse border border-slate-300">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
-                <th className="px-4 py-3 w-10">
+              <tr className="bg-slate-100 sticky top-0 z-10">
+                <th className="px-4 py-3 w-10 border border-slate-300">
                   {activeStatus !== 'Updated' && (
                     <input 
                       type="checkbox" 
@@ -336,19 +336,19 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
                     />
                   )}
                 </th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">SL</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Branch</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Roll</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Mark</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Status</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">SL</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Branch</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Roll</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Mark</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-200">
               {filteredData.map((item, idx) => {
                 const key = `${item.rowId}-${item.markIndex}`;
                 return (
                   <tr key={key} className={`hover:bg-slate-50/50 transition-colors ${selectedRows.has(key) ? 'bg-blue-50/30' : ''}`}>
-                    <td className="px-4 py-1">
+                    <td className="px-4 py-2 border border-slate-300">
                       {activeStatus !== 'Updated' && (
                         <input 
                           type="checkbox" 
@@ -358,11 +358,11 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
                         />
                       )}
                     </td>
-                    <td className="px-6 py-1 text-sm text-slate-500">{idx + 1}</td>
-                  <td className="px-6 py-1 text-sm font-medium text-slate-900">{item.branchName}</td>
-                  <td className="px-6 py-1 text-sm font-bold text-blue-600">{item.roll}</td>
-                  <td className="px-6 py-1 text-sm text-slate-600">{item.mark}</td>
-                  <td className="px-6 py-1">
+                    <td className="px-6 py-2 text-sm text-slate-700 border border-slate-300">{idx + 1}</td>
+                  <td className="px-6 py-2 text-sm font-medium text-slate-900 border border-slate-300">{item.branchName}</td>
+                  <td className="px-6 py-2 text-sm font-bold text-blue-600 border border-slate-300">{item.roll}</td>
+                  <td className="px-6 py-2 text-sm text-slate-600 border border-slate-300">{item.mark}</td>
+                  <td className="px-6 py-2 border border-slate-300">
                     <div className="flex items-center gap-2">
                       <select
                         value={waitingRolls.has(item.roll?.toString() || '') ? 'Waiting' : item.status}
@@ -392,7 +392,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
             })}
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic border border-slate-300">
                     No records found for this subject.
                   </td>
                 </tr>
