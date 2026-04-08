@@ -116,6 +116,26 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
         return onStatusUpdate(rowId, markIndex, newStatus);
       });
       await Promise.all(updates);
+
+      // Remove updated rolls from waitingRolls
+      const rollsToRemove = new Set<string>();
+      selectedRows.forEach(key => {
+        const [rowId, markIndex] = key.split('-').map(Number);
+        const user = users.find(u => u.rowId === rowId);
+        if (user && user.extraData && user.extraData[markIndex]) {
+          const roll = user.extraData[markIndex].roll?.toString();
+          if (roll) rollsToRemove.add(roll);
+        }
+      });
+
+      if (rollsToRemove.size > 0) {
+        setWaitingRolls(prev => {
+          const next = new Set(prev);
+          rollsToRemove.forEach(roll => next.delete(roll));
+          return next;
+        });
+      }
+
       setSelectedRows(new Set());
       if (onNotify) onNotify('success', `Successfully updated ${updates.length} records!`);
     } catch (error) {
