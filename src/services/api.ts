@@ -1,7 +1,7 @@
 import { User, UserFormData, AdminUser, AdminUserRecord, Branch, Examiner } from '../types';
 
 // @ts-ignore
-const SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbzyCxmewKSdvwdJMd3t_6au1G2oFwRJmiB88eADaO5dE4dIlRc3lUuWI2TmDpD83D2p/exec";
+const SCRIPT_URL = import.meta.env.VITE_GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbw1F3InA9wf_U-NUFejQC4MyICJg2eVyyZP2s2wGlajfBIdb3hTPe9VQrUu5jT60nnI/exec";
 
 const MOCK_DATA: User[] = [
   { 
@@ -71,7 +71,7 @@ export const apiService = {
       throw new Error(data.message || 'Login failed');
     } catch (error: any) {
       console.error('Login Error:', error);
-      const isFetchError = error.message === 'Failed to fetch';
+      const isFetchError = error.message?.includes('Failed to fetch');
       throw new Error(isFetchError 
         ? 'Network Error: Google Script unreachable. Please ensure your Script is deployed as a Web App with "Anyone" access and your internet is connected.' 
         : (error.message || 'Network Error'));
@@ -137,7 +137,7 @@ export const apiService = {
       this.clearCache('users');
     } catch (error: any) {
       console.error('Save Error:', error);
-      const isFetchError = error.message === 'Failed to fetch';
+      const isFetchError = error.message?.includes('Failed to fetch');
       throw new Error(isFetchError 
         ? 'Network Error: Could not save data. Please check your Google Script deployment and connection.' 
         : (error.message || 'Network Error'));
@@ -161,7 +161,7 @@ export const apiService = {
       this.clearCache('users');
     } catch (error: any) {
       console.error('Delete Error:', error);
-      const isFetchError = error.message === 'Failed to fetch';
+      const isFetchError = error.message?.includes('Failed to fetch');
       throw new Error(isFetchError 
         ? 'Network Error: Could not delete record. Please check your Google Script deployment and connection.' 
         : (error.message || 'Network Error'));
@@ -214,7 +214,7 @@ export const apiService = {
       this.clearCache('adminUsers');
     } catch (error: any) {
       console.error('Add Admin User Error:', error);
-      const isFetchError = error.message === 'Failed to fetch';
+      const isFetchError = error.message?.includes('Failed to fetch');
       throw new Error(isFetchError 
         ? 'Network Error: Could not add admin user. Please check your Google Script deployment and connection.' 
         : (error.message || 'Network Error'));
@@ -234,7 +234,7 @@ export const apiService = {
       this.clearCache('adminUsers');
     } catch (error: any) {
       console.error('Update Admin Access Error:', error);
-      const isFetchError = error.message === 'Failed to fetch';
+      const isFetchError = error.message?.includes('Failed to fetch');
       throw new Error(isFetchError 
         ? 'Network Error: Could not update access. Please check your Google Script deployment and connection.' 
         : (error.message || 'Network Error'));
@@ -302,7 +302,7 @@ export const apiService = {
       this.clearCache('adminUsers');
     } catch (error: any) {
       console.error('Delete Admin User Error:', error);
-      const isFetchError = error.message === 'Failed to fetch';
+      const isFetchError = error.message?.includes('Failed to fetch');
       throw new Error(isFetchError 
         ? 'Network Error: Could not delete admin user. This usually happens if the "deleteAdminUser" action is not implemented in your Google Script or if there is a connection issue.' 
         : (error.message || 'Network Error'));
