@@ -152,6 +152,85 @@ export function BranchReport({ users }: BranchReportProps) {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Subject Wise Table */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col xl:col-span-2">
+          <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <BarChart3 size={18} className="text-purple-600" />
+              Subject Wise Report
+            </h3>
+          </div>
+          <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+            <table className="w-full text-left border-collapse relative">
+              <thead className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-sm shadow-sm">
+                <tr>
+                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Subject Name</th>
+                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Records</th>
+                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Branches</th>
+                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Teachers</th>
+                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total BV</th>
+                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total EV</th>
+                  <th className="p-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {Object.values(filteredUsers.reduce((acc, user) => {
+                  const subject = user.subject || 'Unknown';
+                  if (!acc[subject]) {
+                    acc[subject] = {
+                      subject,
+                      recordCount: 0,
+                      totalBV: 0,
+                      totalEV: 0,
+                      branches: new Set<string>(),
+                      teachers: new Set<string>()
+                    };
+                  }
+                  acc[subject].recordCount += 1;
+                  acc[subject].totalBV += (user.bvCount || 0);
+                  acc[subject].totalEV += (user.evCount || 0);
+                  if (user.branchName) acc[subject].branches.add(user.branchName);
+                  if (user.teacherName) acc[subject].teachers.add(user.teacherName);
+                  return acc;
+                }, {} as Record<string, any>))
+                .sort((a, b) => b.totalBV - a.totalBV)
+                .map((subject: any) => (
+                  <tr key={subject.subject} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="p-2">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center shrink-0">
+                          <BarChart3 size={16} />
+                        </div>
+                        <p className="text-sm font-semibold text-slate-900">{subject.subject}</p>
+                      </div>
+                    </td>
+                    <td className="p-2 text-center">
+                      <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">
+                        {subject.recordCount}
+                      </span>
+                    </td>
+                    <td className="p-2 text-center text-sm text-slate-600">
+                      {subject.branches.size}
+                    </td>
+                    <td className="p-2 text-center text-sm text-slate-600">
+                      {subject.teachers.size}
+                    </td>
+                    <td className="p-2 text-right">
+                      <span className="text-sm font-bold text-blue-600">{subject.totalBV}</span>
+                    </td>
+                    <td className="p-2 text-right">
+                      <span className="text-sm font-bold text-emerald-600">{subject.totalEV}</span>
+                    </td>
+                    <td className="p-2 text-right">
+                      <span className="text-sm font-bold text-purple-600">{subject.totalBV + subject.totalEV}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Branch Wise Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
