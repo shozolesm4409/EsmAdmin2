@@ -10,7 +10,7 @@ interface BranchReportProps {
 }
 
 export function BranchReport({ users }: BranchReportProps) {
-  const [activeTab, setActiveTab] = useState<'All' | 'Updated' | 'Pending' | 'Wrong'>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Updated' | 'Pending' | 'Wrong' | 'Not Admitted'>('All');
   const [selectedDetails, setSelectedDetails] = useState<{ title: string; data: any } | null>(null);
 
   const filteredUsers = activeTab === 'All' 
@@ -26,9 +26,13 @@ export function BranchReport({ users }: BranchReportProps) {
         (!u.paymentStatus || u.paymentStatus === 'Pending') || 
         (u.extraData && u.extraData.some(m => m.status === 'Pending'))
       )
-    : users.filter(u => 
+    : activeTab === 'Wrong'
+    ? users.filter(u => 
         u.paymentStatus === 'Wrong' || 
         (u.extraData && u.extraData.some(m => m.status === 'Wrong'))
+      )
+    : users.filter(u => 
+        (u.extraData && u.extraData.some(m => m.status === 'Not Admitted'))
       );
 
   const getEffectiveCounts = (user: User) => {
@@ -74,7 +78,7 @@ export function BranchReport({ users }: BranchReportProps) {
         };
       }
       return { bv: 0, ev: 0, records: 0 };
-    } else {
+    } else if (activeTab === 'Wrong') {
       // For Wrong tab, only count 'Wrong' status marks
       const wrongMarksCount = (user.extraData || []).filter(m => m.status === 'Wrong').length;
       const isPaymentWrong = user.paymentStatus === 'Wrong';
@@ -84,6 +88,20 @@ export function BranchReport({ users }: BranchReportProps) {
       } else if (wrongMarksCount > 0) {
         const totalMarks = (user.extraData || []).length || 1;
         const ratio = wrongMarksCount / totalMarks;
+        return { 
+          bv: Math.round(bv * ratio), 
+          ev: Math.round(ev * ratio), 
+          records: 1 
+        };
+      }
+      return { bv: 0, ev: 0, records: 0 };
+    } else {
+      // For Not Admitted tab
+      const notAdmittedMarksCount = (user.extraData || []).filter(m => m.status === 'Not Admitted').length;
+      
+      if (notAdmittedMarksCount > 0) {
+        const totalMarks = (user.extraData || []).length || 1;
+        const ratio = notAdmittedMarksCount / totalMarks;
         return { 
           bv: Math.round(bv * ratio), 
           ev: Math.round(ev * ratio), 
@@ -349,6 +367,15 @@ export function BranchReport({ users }: BranchReportProps) {
             )}
           >
             Wrong Record
+          </button>
+          <button
+            onClick={() => setActiveTab('Not Admitted')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-bold transition-colors cursor-pointer",
+              activeTab === 'Not Admitted' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            Not Admitted Record
           </button>
         </div>
       </div>
