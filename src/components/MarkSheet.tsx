@@ -336,11 +336,11 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
                     />
                   )}
                 </th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">SL</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Branch</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Roll</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Mark</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Status</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">SL</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">Branch</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">Roll</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">Mark</th>
+                <th className="px-3 py-1.5 text-xs font-bold text-slate-700 uppercase border border-slate-300">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
