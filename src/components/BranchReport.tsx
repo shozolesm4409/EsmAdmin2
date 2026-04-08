@@ -9,19 +9,95 @@ interface BranchReportProps {
 }
 
 export function BranchReport({ users }: BranchReportProps) {
-  const [activeTab, setActiveTab] = useState<'All' | 'Updated'>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Updated' | 'Pending' | 'Wrong'>('All');
   const [selectedDetails, setSelectedDetails] = useState<{ title: string; data: any } | null>(null);
 
   const filteredUsers = activeTab === 'All' 
     ? users 
-    : users.filter(u => 
+    : activeTab === 'Updated'
+    ? users.filter(u => 
         u.paymentStatus === 'Update' || 
         u.paymentStatus === 'Updated' || 
         (u.extraData && u.extraData.some(m => m.status === 'Update' || m.status === 'Updated'))
+      )
+    : activeTab === 'Pending'
+    ? users.filter(u => 
+        (!u.paymentStatus || u.paymentStatus === 'Pending') || 
+        (u.extraData && u.extraData.some(m => m.status === 'Pending'))
+      )
+    : users.filter(u => 
+        u.paymentStatus === 'Wrong' || 
+        (u.extraData && u.extraData.some(m => m.status === 'Wrong'))
       );
 
-  // Group data by branch
-  const branchData = filteredUsers.reduce((acc, user) => {
+  const getEffectiveCounts = (user: User) => {
+    const bv = user.bvCount || 0;
+    const ev = user.evCount || 0;
+
+    if (activeTab === 'All') {
+      return { bv, ev, records: 1 };
+    }
+    
+    if (activeTab === 'Updated') {
+      // For Updated tab, only count 'Updated' or 'Update' status marks
+      const updatedMarksCount = (user.extraData || []).filter(m => m.status === 'Updated' || m.status === 'Update').length;
+      const isPaymentUpdated = user.paymentStatus === 'Updated' || user.paymentStatus === 'Update';
+      
+      if (isPaymentUpdated) {
+        return { bv, ev, records: 1 };
+      } else if (updatedMarksCount > 0) {
+        // Calculate partial BV/EV based on updated marks
+        const totalMarks = (user.extraData || []).length || 1;
+        const ratio = updatedMarksCount / totalMarks;
+        return { 
+          bv: Math.round(bv * ratio), 
+          ev: Math.round(ev * ratio), 
+          records: 1 
+        };
+      }
+      return { bv: 0, ev: 0, records: 0 };
+    } else if (activeTab === 'Pending') {
+      // For Pending tab, only count 'Pending' status marks
+      const pendingMarksCount = (user.extraData || []).filter(m => m.status === 'Pending').length;
+      const isPaymentPending = !user.paymentStatus || user.paymentStatus === 'Pending';
+      
+      if (isPaymentPending && (!user.extraData || user.extraData.length === 0)) {
+        return { bv, ev, records: 1 };
+      } else if (pendingMarksCount > 0) {
+        const totalMarks = (user.extraData || []).length || 1;
+        const ratio = pendingMarksCount / totalMarks;
+        return { 
+          bv: Math.round(bv * ratio), 
+          ev: Math.round(ev * ratio), 
+          records: 1 
+        };
+      }
+      return { bv: 0, ev: 0, records: 0 };
+    } else {
+      // For Wrong tab, only count 'Wrong' status marks
+      const wrongMarksCount = (user.extraData || []).filter(m => m.status === 'Wrong').length;
+      const isPaymentWrong = user.paymentStatus === 'Wrong';
+      
+      if (isPaymentWrong) {
+        return { bv, ev, records: 1 };
+      } else if (wrongMarksCount > 0) {
+        const totalMarks = (user.extraData || []).length || 1;
+        const ratio = wrongMarksCount / totalMarks;
+        return { 
+          bv: Math.round(bv * ratio), 
+          ev: Math.round(ev * ratio), 
+          records: 1 
+        };
+      }
+      return { bv: 0, ev: 0, records: 0 };
+    }
+  };
+
+  // Group data by branch using effective counts
+  const branchData = users.reduce((acc, user) => {
+    const counts = getEffectiveCounts(user);
+    if (counts.records === 0 && activeTab !== 'All') return acc;
+
     const branchId = user.branchId || 'Unknown';
     if (!acc[branchId]) {
       acc[branchId] = {
@@ -35,9 +111,9 @@ export function BranchReport({ users }: BranchReportProps) {
         users: []
       };
     }
-    acc[branchId].totalBV += (user.bvCount || 0);
-    acc[branchId].totalEV += (user.evCount || 0);
-    acc[branchId].recordCount += 1;
+    acc[branchId].totalBV += counts.bv;
+    acc[branchId].totalEV += counts.ev;
+    acc[branchId].recordCount += counts.records;
     acc[branchId].users.push(user);
     if (user.subject) acc[branchId].subjects.add(user.subject);
     if (user.teacherName) acc[branchId].teachers.add(user.teacherName);
@@ -46,8 +122,11 @@ export function BranchReport({ users }: BranchReportProps) {
 
   const branchList = Object.values(branchData).sort((a, b) => b.totalBV - a.totalBV);
 
-  // Group data by teacher
-  const teacherData = filteredUsers.reduce((acc, user) => {
+  // Group data by teacher using effective counts
+  const teacherData = users.reduce((acc, user) => {
+    const counts = getEffectiveCounts(user);
+    if (counts.records === 0 && activeTab !== 'All') return acc;
+
     const teacherName = user.teacherName || 'Unknown';
     const teacherTPIN = user.teacherTPIN || 'Unknown';
     const key = `${teacherName}-${teacherTPIN}`;
@@ -63,9 +142,9 @@ export function BranchReport({ users }: BranchReportProps) {
         users: []
       };
     }
-    acc[key].totalBV += (user.bvCount || 0);
-    acc[key].totalEV += (user.evCount || 0);
-    acc[key].recordCount += 1;
+    acc[key].totalBV += counts.bv;
+    acc[key].totalEV += counts.ev;
+    acc[key].recordCount += counts.records;
     acc[key].users.push(user);
     if (user.branchName) acc[key].branches.add(user.branchName);
     if (user.subject) acc[key].subjects.add(user.subject);
@@ -73,6 +152,37 @@ export function BranchReport({ users }: BranchReportProps) {
   }, {} as Record<string, any>);
 
   const teacherList = Object.values(teacherData).sort((a, b) => b.totalBV - a.totalBV);
+
+  // Group data by subject using effective counts
+  const subjectData = Object.values(users.reduce((acc, user) => {
+    const counts = getEffectiveCounts(user);
+    if (counts.records === 0 && activeTab !== 'All') return acc;
+
+    const subject = user.subject || 'Unknown';
+    if (!acc[subject]) {
+      acc[subject] = {
+        subject,
+        recordCount: 0,
+        totalBV: 0,
+        totalEV: 0,
+        branches: new Set<string>(),
+        teachers: new Set<string>()
+      };
+    }
+    acc[subject].recordCount += counts.records;
+    acc[subject].totalBV += counts.bv;
+    acc[subject].totalEV += counts.ev;
+    if (user.branchName) acc[subject].branches.add(user.branchName);
+    if (user.teacherName) acc[subject].teachers.add(user.teacherName);
+    return acc;
+  }, {} as Record<string, any>)).sort((a, b) => b.totalBV - a.totalBV);
+
+  const totals = users.reduce((acc, u) => {
+    const counts = getEffectiveCounts(u);
+    acc.bv += counts.bv;
+    acc.ev += counts.ev;
+    return acc;
+  }, { bv: 0, ev: 0 });
 
   return (
     <div className="space-y-6">
@@ -100,6 +210,24 @@ export function BranchReport({ users }: BranchReportProps) {
           >
             Updated Records
           </button>
+          <button
+            onClick={() => setActiveTab('Pending')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-bold transition-colors cursor-pointer",
+              activeTab === 'Pending' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            Pending Record
+          </button>
+          <button
+            onClick={() => setActiveTab('Wrong')}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-bold transition-colors cursor-pointer",
+              activeTab === 'Wrong' ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            Wrong Record
+          </button>
         </div>
       </div>
 
@@ -110,7 +238,7 @@ export function BranchReport({ users }: BranchReportProps) {
           </div>
           <p className="text-sm text-slate-500 font-medium">Avg BV per Branch</p>
           <p className="text-2xl font-bold text-slate-900">
-            {branchList.length ? Math.round(filteredUsers.reduce((acc, u) => acc + (u.bvCount || 0), 0) / branchList.length) : 0}
+            {branchList.length ? Math.round(totals.bv / branchList.length) : 0}
           </p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -128,7 +256,7 @@ export function BranchReport({ users }: BranchReportProps) {
           </div>
           <p className="text-sm text-slate-500 font-medium">Total BV</p>
           <p className="text-2xl font-bold text-slate-900">
-            {filteredUsers.reduce((acc, u) => acc + (u.bvCount || 0), 0)}
+            {totals.bv}
           </p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -137,7 +265,7 @@ export function BranchReport({ users }: BranchReportProps) {
           </div>
           <p className="text-sm text-slate-500 font-medium">Total EV</p>
           <p className="text-2xl font-bold text-slate-900">
-            {filteredUsers.reduce((acc, u) => acc + (u.evCount || 0), 0)}
+            {totals.ev}
           </p>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
@@ -146,7 +274,7 @@ export function BranchReport({ users }: BranchReportProps) {
           </div>
           <p className="text-sm text-slate-500 font-medium">Total BV + EV</p>
           <p className="text-2xl font-bold text-slate-900">
-            {filteredUsers.reduce((acc, u) => acc + (u.bvCount || 0), 0) + filteredUsers.reduce((acc, u) => acc + (u.evCount || 0), 0)}
+            {totals.bv + totals.ev}
           </p>
         </div>
       </div>
@@ -174,27 +302,7 @@ export function BranchReport({ users }: BranchReportProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {Object.values(filteredUsers.reduce((acc, user) => {
-                  const subject = user.subject || 'Unknown';
-                  if (!acc[subject]) {
-                    acc[subject] = {
-                      subject,
-                      recordCount: 0,
-                      totalBV: 0,
-                      totalEV: 0,
-                      branches: new Set<string>(),
-                      teachers: new Set<string>()
-                    };
-                  }
-                  acc[subject].recordCount += 1;
-                  acc[subject].totalBV += (user.bvCount || 0);
-                  acc[subject].totalEV += (user.evCount || 0);
-                  if (user.branchName) acc[subject].branches.add(user.branchName);
-                  if (user.teacherName) acc[subject].teachers.add(user.teacherName);
-                  return acc;
-                }, {} as Record<string, any>))
-                .sort((a, b) => b.totalBV - a.totalBV)
-                .map((subject: any) => (
+                {subjectData.map((subject: any) => (
                   <tr key={subject.subject} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-2">
                       <div className="flex items-center gap-3">
@@ -232,7 +340,7 @@ export function BranchReport({ users }: BranchReportProps) {
         </div>
 
         {/* Branch Wise Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col xl:col-span-2">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <Building2 size={18} className="text-blue-600" />
@@ -308,7 +416,7 @@ export function BranchReport({ users }: BranchReportProps) {
         </div>
 
         {/* Teachers Wise Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col xl:col-span-2">
           <div className="p-4 border-b border-slate-100 bg-slate-50/50">
             <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <GraduationCap size={18} className="text-emerald-600" />
