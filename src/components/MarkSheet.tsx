@@ -181,7 +181,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
   }, [users, activeSubject]);
 
   const handlePreviewJSON = () => {
-    if (activeStatus !== 'Pending') return;
+    if (activeStatus !== 'Pending' && !(activeStatus === 'Updated' && adminAccess === 'Full')) return;
     
     const rolls = new Set<string>();
     const jsonData = filteredData.map((item, idx) => {
@@ -232,7 +232,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
             <p className="text-sm text-slate-500">View and manage student marks by subject.</p>
           </div>
           <div className="flex items-center gap-3">
-            {activeStatus === 'Pending' && filteredData.length > 0 && (
+            {(activeStatus === 'Pending' || (activeStatus === 'Updated' && adminAccess === 'Full')) && filteredData.length > 0 && (
               <button
                 onClick={handlePreviewJSON}
                 className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 transition-all shadow-sm cursor-pointer"
