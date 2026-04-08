@@ -183,44 +183,44 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
           </div>
         </div>
 
-        <div className="overflow-x-auto border border-slate-100 rounded-xl max-h-[400px] overflow-y-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+          <table className="w-full text-left border-collapse border border-slate-300">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 sticky top-0 z-10">
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Teacher</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">TPIN</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Branch</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">BV Count</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase">EV Count</th>
-                <th className="px-6 py-3 text-xs font-bold text-slate-500 uppercase text-right">Action</th>
+              <tr className="bg-slate-100 sticky top-0 z-10">
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Date</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Teacher</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">TPIN</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">Branch</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">BV Count</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase border border-slate-300">EV Count</th>
+                <th className="px-6 py-3 text-xs font-bold text-slate-700 uppercase text-right border border-slate-300">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-200">
               {filteredData.map((group) => (
                 <React.Fragment key={group.key}>
                   {group.branches.map((branch: any, bIdx: number) => {
                     const branchKey = `${group.key}-${branch.branchName}`;
                     return (
-                      <tr key={branchKey} className="hover:bg-slate-50/50 transition-colors border-b border-slate-50 last:border-b-0">
-                        <td className="px-6 py-1 text-sm text-slate-500">
+                      <tr key={branchKey} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-2 text-sm text-slate-700 border border-slate-300">
                           {branch.entryDate ? branch.entryDate.split('T')[0] : ''}
                         </td>
                         {bIdx === 0 && (
                           <>
-                            <td className="px-6 py-1 text-sm text-slate-600 border-r border-slate-100" rowSpan={group.branches.length}>
+                            <td className="px-6 py-2 text-sm text-slate-900 font-semibold border border-slate-300" rowSpan={group.branches.length}>
                               {group.teacherName}
                             </td>
-                            <td className="px-6 py-1 text-sm font-mono text-slate-500 border-r border-slate-100" rowSpan={group.branches.length}>
+                            <td className="px-6 py-2 text-sm font-mono text-slate-600 border border-slate-300" rowSpan={group.branches.length}>
                               {group.teacherTPIN}
                             </td>
                           </>
                         )}
-                        <td className="px-6 py-1 text-sm font-bold text-slate-900">{branch.branchName}</td>
-                        <td className="px-6 py-1 text-sm font-bold text-blue-600">{branch.bvCount}</td>
-                        <td className="px-6 py-1 text-sm font-bold text-emerald-600">{branch.evCount}</td>
+                        <td className="px-6 py-2 text-sm font-bold text-slate-900 border border-slate-300">{branch.branchName}</td>
+                        <td className="px-6 py-2 text-sm font-bold text-blue-600 border border-slate-300">{branch.bvCount}</td>
+                        <td className="px-6 py-2 text-sm font-bold text-emerald-600 border border-slate-300">{branch.evCount}</td>
                         {bIdx === 0 && (
-                          <td className="px-6 py-1 text-right" rowSpan={group.branches.length}>
+                          <td className="px-6 py-2 text-right border border-slate-300" rowSpan={group.branches.length}>
                             <div className="flex items-center justify-end gap-2">
                               <select 
                                 value={activeStatus} 
@@ -246,7 +246,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
               ))}
               {filteredData.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500 italic">
+                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500 italic border border-slate-300">
                     No records found for this subject.
                   </td>
                 </tr>
