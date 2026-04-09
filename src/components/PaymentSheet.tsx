@@ -31,6 +31,7 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
   const [activeStatus, setActiveStatus] = useState('Pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [isSummaryPopupOpen, setIsSummaryPopupOpen] = useState(false);
 
   const statusCounts = React.useMemo(() => {
     const counts = { Pending: 0, Updated: 0 };
@@ -131,6 +132,14 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
             <p className="text-sm text-slate-500">View TPIN and BV/EV counts by subject.</p>
           </div>
           <div className="flex items-center gap-3">
+            {activeStatus === 'Updated' && (
+              <button
+                onClick={() => setIsSummaryPopupOpen(true)}
+                className="px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 cursor-pointer bg-blue-600 text-white shadow-sm hover:bg-blue-700"
+              >
+                Summary
+              </button>
+            )}
             <div className="relative">
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
@@ -255,6 +264,64 @@ export function PaymentSheet({ users, onStatusUpdate, adminAccess = '' }: Paymen
           </table>
         </div>
       </div>
+
+      {isSummaryPopupOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h3 className="text-lg font-bold text-slate-800">Payment Summary (Updated)</h3>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                  <span className="text-xs font-semibold text-slate-500">Total Teacher:</span>
+                  <span className="text-sm font-bold text-slate-800">{filteredData.length}</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                  <span className="text-xs font-semibold text-slate-500">Total Script:</span>
+                  <span className="text-sm font-bold text-blue-600">{filteredData.reduce((sum, group) => sum + group.branches.reduce((bSum: number, b: any) => bSum + b.bvCount + b.evCount, 0), 0)}</span>
+                </div>
+                <button 
+                  onClick={() => setIsSummaryPopupOpen(false)}
+                  className="p-2 hover:bg-slate-200 rounded-full transition-colors cursor-pointer ml-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+              </div>
+            </div>
+            <div className="p-4 overflow-y-auto">
+              <table className="w-full text-left border-collapse border border-slate-300">
+                <thead>
+                  <tr className="bg-slate-100 sticky top-0 z-10">
+                    <th className="px-3 py-2 text-xs font-bold text-slate-700 uppercase border border-slate-300">SL</th>
+                    <th className="px-3 py-2 text-xs font-bold text-slate-700 uppercase border border-slate-300">Teacher</th>
+                    <th className="px-3 py-2 text-xs font-bold text-slate-700 uppercase border border-slate-300">TPIN</th>
+                    <th className="px-3 py-2 text-xs font-bold text-slate-700 uppercase border border-slate-300 text-right">Total Script</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filteredData.map((group, index) => {
+                    const totalScript = group.branches.reduce((sum: number, b: any) => sum + b.bvCount + b.evCount, 0);
+                    return (
+                      <tr key={group.key} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-4 py-2 text-sm text-slate-700 border border-slate-300">{index + 1}</td>
+                        <td className="px-4 py-2 text-sm font-semibold text-slate-900 border border-slate-300">{group.teacherName}</td>
+                        <td className="px-4 py-2 text-sm font-mono text-slate-600 border border-slate-300">{group.teacherTPIN}</td>
+                        <td className="px-4 py-2 text-sm font-bold text-blue-600 border border-slate-300 text-right">{totalScript}</td>
+                      </tr>
+                    );
+                  })}
+                  {filteredData.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-8 text-center text-slate-500 italic border border-slate-300">
+                        No summary data available.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
