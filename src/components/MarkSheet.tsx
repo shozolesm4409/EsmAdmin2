@@ -349,6 +349,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
             <tbody className="divide-y divide-slate-200">
               {filteredData.map((item, idx) => {
                 const key = `${item.rowId}-${item.markIndex}`;
+                const isWaiting = activeStatus === 'Pending' && waitingRolls.has(item.roll?.toString() || '');
                 return (
                   <tr key={key} className={`hover:bg-slate-50/50 transition-colors ${selectedRows.has(key) ? 'bg-blue-50/30' : ''}`}>
                     <td className="px-4 py-2 border border-slate-300">
@@ -368,11 +369,11 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
                   <td className="px-6 py-2 border border-slate-300">
                     <div className="flex items-center gap-2">
                       <select
-                        value={waitingRolls.has(item.roll?.toString() || '') ? 'Waiting' : item.status}
+                        value={isWaiting ? 'Waiting' : item.status}
                         disabled={updating === `${item.rowId}-${item.markIndex}`}
                         onChange={(e) => handleStatusChange(item.rowId, item.markIndex, e.target.value)}
                         className={`text-[10px] font-bold px-2 py-1 rounded-lg border-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition-all shadow-sm ${
-                          waitingRolls.has(item.roll?.toString() || '') ? 'bg-indigo-500 text-white' :
+                          isWaiting ? 'bg-indigo-500 text-white' :
                           item.status === 'Updated' ? 'bg-emerald-500 text-white hover:bg-emerald-600' :
                           item.status === 'Wrong' ? 'bg-rose-500 text-white hover:bg-rose-600' :
                           item.status === 'Not Admitted' ? 'bg-slate-600 text-white hover:bg-slate-700' :
@@ -383,7 +384,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
                         <option value="Updated">Updated</option>
                         <option value="Wrong">Wrong</option>
                         <option value="Not Admitted">Not Admitted</option>
-                        {waitingRolls.has(item.roll?.toString() || '') && (
+                        {isWaiting && (
                           <option value="Waiting">Waiting</option>
                         )}
                       </select>
