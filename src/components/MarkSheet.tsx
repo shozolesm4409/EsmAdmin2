@@ -48,6 +48,7 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
   const [updating, setUpdating] = useState<string | null>(null);
   const [previewJSON, setPreviewJSON] = useState<string | null>(null);
   const [previewCount, setPreviewCount] = useState(0);
+  const [manualFormat, setManualFormat] = useState<'Auto' | 'Standard' | 'Complex'>('Auto');
   const [waitingRolls, setWaitingRolls] = useState<Set<string>>(() => {
     const saved = localStorage.getItem('waitingRolls');
     if (saved) {
@@ -68,20 +69,33 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
-  const filteredData = users
-    .filter(u => u.subject === activeSubject)
-    .flatMap(u => (u.extraData || []).map((mark, idx) => ({
-      ...mark,
-      branchName: u.branchName,
-      rowId: u.rowId,
-      markIndex: idx
-    })))
-    .filter(item => {
-      const matchesSearch = (item.branchName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (item.roll || '').toString().includes(searchTerm);
-      const matchesStatus = item.status === activeStatus;
-      return matchesSearch && matchesStatus;
-    });
+  const filteredData = React.useMemo(() => {
+    return users
+      .filter(u => u.subject === activeSubject)
+      .flatMap(u => (u.extraData || []).map((mark, idx) => ({
+        ...mark,
+        branchName: u.branchName,
+        rowId: u.rowId,
+        markIndex: idx
+      })))
+      .filter(item => {
+        const matchesSearch = (item.branchName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             (item.roll || '').toString().includes(searchTerm);
+        const matchesStatus = item.status === activeStatus;
+        return matchesSearch && matchesStatus;
+      });
+  }, [users, activeSubject, searchTerm, activeStatus]);
+
+  // Set default format based on subject
+  React.useEffect(() => {
+    const isComplexSubject = 
+      activeSubject.includes('বিজ্ঞান') || 
+      activeSubject.includes('Science') || 
+      activeSubject.includes('বাংলাদেশ ও বিশ্ব') || 
+      activeSubject.includes('BGS');
+    
+    setManualFormat(isComplexSubject ? 'Complex' : 'Auto');
+  }, [activeSubject]);
 
   // Clear selection when subject or status changes
   React.useEffect(() => {
@@ -181,17 +195,59 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
     return counts;
   }, [users, activeSubject]);
 
-  const handlePreviewJSON = () => {
+  const handlePreviewJSON = React.useCallback((formatOverride?: 'Standard' | 'Complex') => {
     if (activeStatus !== 'Pending' && !(activeStatus === 'Updated' && adminAccess === 'Full')) return;
     
     const rolls = new Set<string>();
+    
+    const isComplexSubject = 
+      activeSubject.includes('বিজ্ঞান') || 
+      activeSubject.includes('Science') || 
+      activeSubject.includes('বাংলাদেশ ও বিশ্ব') || 
+      activeSubject.includes('BGS');
+
+    // Determine format
+    let format = formatOverride || manualFormat;
+    if (format === 'Auto') {
+      const hasComplexData = filteredData.some(item => {
+        const m = (item.mark || '').toString();
+        return m.includes(',') || m.includes('-');
+      });
+      format = (isComplexSubject && hasComplexData) ? 'Complex' : 'Standard';
+    }
+
     const jsonData = filteredData.map((item, idx) => {
-      if (item.roll) rolls.add(item.roll.toString());
-      return {
-        slno: (idx + 1).toString().padStart(2, '0'),
-        roll: (item.roll || '').toString(),
-        mark: (item.mark || '').toString()
-      };
+      const rollStr = (item.roll !== undefined && item.roll !== null) ? item.roll.toString() : '';
+      if (rollStr) rolls.add(rollStr);
+      
+      const markStr = (item.mark || '').toString();
+      
+      if (format === 'Complex') {
+        const parts = markStr.split(',').map(p => p.trim());
+        const markObj: any = {
+          slno: (idx + 1).toString(),
+          roll: rollStr,
+          mark1: "",
+          mark2: "",
+          mark3: "",
+          mark4: ""
+        };
+        
+        parts.forEach((part, i) => {
+          if (i < 4) {
+            const matches = part.match(/\d+/g);
+            markObj[`mark${i + 1}`] = matches ? matches[matches.length - 1] : "";
+          }
+        });
+        
+        return markObj;
+      } else {
+        return {
+          slno: (idx + 1).toString().padStart(2, '0'),
+          roll: rollStr,
+          mark: markStr
+        };
+      }
     });
 
     const jsonString = JSON.stringify(jsonData, null, 2);
@@ -199,10 +255,23 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
     setPreviewCount(jsonData.length);
     setWaitingRolls(prev => {
       const next = new Set(prev);
-      rolls.forEach(r => next.add(r));
-      return next;
+      let changed = false;
+      rolls.forEach(r => {
+        if (!next.has(r)) {
+          next.add(r);
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
     });
-  };
+  }, [activeStatus, adminAccess, activeSubject, manualFormat, filteredData]);
+
+  // Re-generate JSON when format changes while modal is open
+  React.useEffect(() => {
+    if (previewJSON && manualFormat !== 'Auto') {
+      handlePreviewJSON(manualFormat);
+    }
+  }, [manualFormat, previewJSON, handlePreviewJSON]);
 
   const handleClosePreview = () => {
     setPreviewJSON(null);
@@ -415,7 +484,22 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div>
                 <h3 className="text-lg font-bold text-slate-900">JSON Preview</h3>
-                <p className="text-sm text-slate-500">Subject: <span className="font-semibold text-slate-700">{activeSubject}</span> • <span className="font-semibold text-slate-700">{previewCount}</span> records</p>
+                <div className="flex items-center gap-4 mt-1">
+                  <p className="text-sm text-slate-500">Subject: <span className="font-semibold text-slate-700">{activeSubject}</span> • <span className="font-semibold text-slate-700">{previewCount}</span> records</p>
+                  <div className="h-4 w-px bg-slate-300" />
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500 uppercase">Format:</span>
+                    <select 
+                      value={manualFormat}
+                      onChange={(e) => setManualFormat(e.target.value as any)}
+                      className="text-[10px] font-bold bg-white border border-slate-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="Auto">Auto Detect</option>
+                      <option value="Standard">Standard (slno, roll, mark)</option>
+                      <option value="Complex">Complex (mark1-4)</option>
+                    </select>
+                  </div>
+                </div>
               </div>
               <button onClick={handleClosePreview} className="text-slate-400 hover:text-slate-600 cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
