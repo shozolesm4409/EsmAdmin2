@@ -234,9 +234,18 @@ export function MarkSheet({ users, onStatusUpdate, adminAccess = '', onNotify, i
         };
         
         parts.forEach((part, i) => {
-          if (i < 4) {
-            const matches = part.match(/\d+/g);
-            markObj[`mark${i + 1}`] = matches ? matches[matches.length - 1] : "";
+          // Extract number including decimals. Example: "Sci-19" -> 19, "BGS-23.5" -> 23.5
+          const matches = part.match(/\d+(\.\d+)?/g);
+          const val = matches ? matches[matches.length - 1] : "";
+          const upperPart = part.toUpperCase();
+
+          if (upperPart.includes('SCI')) {
+            markObj.mark1 = val;
+          } else if (upperPart.includes('BGS')) {
+            markObj.mark2 = val;
+          } else if (i < 4 && !markObj[`mark${i + 1}`]) {
+            // Fallback for parts without Sci/BGS labels
+            markObj[`mark${i + 1}`] = val;
           }
         });
         
