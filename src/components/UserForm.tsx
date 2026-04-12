@@ -6,9 +6,10 @@ interface UserFormProps {
   initialData?: User | null;
   onSubmit: (data: UserFormData) => void;
   onCancel: () => void;
+  adminRole?: string;
 }
 
-export function UserForm({ initialData, onSubmit, onCancel }: UserFormProps) {
+export function UserForm({ initialData, onSubmit, onCancel, adminRole }: UserFormProps) {
   const [formData, setFormData] = useState<UserFormData>({
     branchName: '',
     subject: '',
@@ -109,33 +110,49 @@ export function UserForm({ initialData, onSubmit, onCancel }: UserFormProps) {
         </div>
         
         <div className="space-y-3">
-          {formData.allMarks.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-12 gap-2 items-end bg-slate-50 p-3 rounded-xl border border-slate-100">
-              <div className="col-span-4">
-                <label className="text-[10px] uppercase font-bold text-slate-500">Roll</label>
-                <input type="text" disabled={!!initialData} value={item.roll} onChange={(e) => updateMark(idx, 'roll', e.target.value)} className="w-full px-2 py-1 bg-white border border-slate-200 rounded disabled:opacity-60 disabled:cursor-not-allowed" />
+          {formData.allMarks.map((item, idx) => {
+            const isInputDisabled = !!initialData && adminRole !== 'Admin';
+            
+            return (
+              <div key={idx} className="grid grid-cols-12 gap-2 items-end bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <div className="col-span-4">
+                  <label className="text-[10px] uppercase font-bold text-slate-500">Roll</label>
+                  <input 
+                    type="text" 
+                    disabled={isInputDisabled} 
+                    value={item.roll} 
+                    onChange={(e) => updateMark(idx, 'roll', e.target.value)} 
+                    className="w-full px-2 py-1 bg-white border border-slate-200 rounded disabled:opacity-60 disabled:cursor-not-allowed" 
+                  />
+                </div>
+                <div className="col-span-3">
+                  <label className="text-[10px] uppercase font-bold text-slate-500">Mark</label>
+                  <input 
+                    type="text" 
+                    disabled={isInputDisabled} 
+                    value={item.mark} 
+                    onChange={(e) => updateMark(idx, 'mark', e.target.value)} 
+                    className="w-full px-2 py-1 bg-white border border-slate-200 rounded disabled:opacity-60 disabled:cursor-not-allowed" 
+                  />
+                </div>
+                <div className="col-span-4">
+                  <label className="text-[10px] uppercase font-bold text-slate-500">Status</label>
+                  <select value={item.status} onChange={(e) => updateMark(idx, 'status', e.target.value)} className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs">
+                    <option value="Pending">Pending</option>
+                    <option value="Wrong">Wrong</option>
+                    <option value="Updated">Updated</option>
+                  </select>
+                </div>
+                <div className="col-span-1 flex justify-center">
+                  {!initialData && (
+                    <button type="button" onClick={() => removeMarkRow(idx)} className="text-red-500 hover:bg-red-50 p-1 rounded">
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="col-span-3">
-                <label className="text-[10px] uppercase font-bold text-slate-500">Mark</label>
-                <input type="text" disabled={!!initialData} value={item.mark} onChange={(e) => updateMark(idx, 'mark', e.target.value)} className="w-full px-2 py-1 bg-white border border-slate-200 rounded disabled:opacity-60 disabled:cursor-not-allowed" />
-              </div>
-              <div className="col-span-4">
-                <label className="text-[10px] uppercase font-bold text-slate-500">Status</label>
-                <select value={item.status} onChange={(e) => updateMark(idx, 'status', e.target.value)} className="w-full px-2 py-1 bg-white border border-slate-200 rounded text-xs">
-                  <option value="Pending">Pending</option>
-                  <option value="Wrong">Wrong</option>
-                  <option value="Updated">Updated</option>
-                </select>
-              </div>
-              <div className="col-span-1 flex justify-center">
-                {!initialData && (
-                  <button type="button" onClick={() => removeMarkRow(idx)} className="text-red-500 hover:bg-red-50 p-1 rounded">
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
