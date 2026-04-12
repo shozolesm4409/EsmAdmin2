@@ -458,7 +458,12 @@ export default function App() {
 
       {/* Modals */}
       <Modal isOpen={isFormModalOpen} onClose={() => { setIsFormModalOpen(false); setEditingUser(null); }} title={editingUser ? 'Edit Record' : 'Add New Record'}>
-        <UserForm initialData={editingUser} onSubmit={handleSaveData} onCancel={() => { setIsFormModalOpen(false); setEditingUser(null); }} />
+        <UserForm 
+          initialData={editingUser} 
+          onSubmit={handleSaveData} 
+          onCancel={() => { setIsFormModalOpen(false); setEditingUser(null); }} 
+          adminRole={admin?.role}
+        />
       </Modal>
 
       <Modal isOpen={isAdminFormModalOpen} onClose={() => setIsAdminFormModalOpen(false)} title="Add Admin User" maxWidth="3xl">
